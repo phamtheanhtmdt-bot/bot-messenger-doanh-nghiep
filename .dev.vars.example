@@ -3,4 +3,4 @@ FB_PAGE_TOKEN=
 FB_APP_SECRET=
 FB_VERIFY_TOKEN=
 OPENAI_API_KEY=
-ADMIN_KEY=
+# ADMIN_KEY= (tuỳ chọn, khoá cố định cho script; bình thường mã /quan-ly tự đặt lần đầu mở trang)

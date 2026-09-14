@@ -1,5 +1,5 @@
 # Bot Messenger cho doanh nghiệp — Claude Code sẽ điền 5 chỗ có chữ <...> rồi chạy `npx wrangler deploy`
-# Secrets (npx wrangler secret put): FB_PAGE_TOKEN, FB_APP_SECRET, FB_VERIFY_TOKEN, ADMIN_KEY, OPENAI_API_KEY
+# Secrets (npx wrangler secret put): FB_PAGE_TOKEN, FB_APP_SECRET, FB_VERIFY_TOKEN, OPENAI_API_KEY (mã vào /quan-ly: người dùng tự đặt lần đầu, không phải secret)
 name = "<ten-worker-khong-dau>"          # ví dụ: bot-an-spa (chữ thường, không dấu, gạch ngang)
 main = "src/index.js"
 compatibility_date = "2026-06-04"

@@ -97,3 +97,27 @@ test("bóc JSON chịu được chữ thừa và xuống dòng thật trong chu�
 test("MODEL là danh sách cách nhau dấu phẩy", () => {
   assert.deepEqual(danhSachModel({ MODEL: "gpt-4.1, gpt-4.1-mini ,claude-haiku-4-5" }), ["gpt-4.1", "gpt-4.1-mini", "claude-haiku-4-5"]);
 });
+
+test("mã đăng nhập: lần đầu mở /quan-ly thì tự đặt mã; mã đó vào được /admin; không đặt đè được", async () => {
+  const { env, goi } = moi();
+  delete env.ADMIN_KEY;
+  const dau = await goi("/quan-ly");
+  assert.equal(dau.status, 200);
+  assert.match(await dau.text(), /tao-ma/);
+  assert.equal((await goi("/admin?key=bat-ky")).status, 401);
+  const form = o => ({ method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(o).toString() });
+  assert.equal((await goi("/quan-ly/tao-ma", form({ ma: "mat-khau-1", ma2: "khac" }))).status, 400);
+  assert.equal((await goi("/quan-ly/tao-ma", form({ ma: "ngan", ma2: "ngan" }))).status, 400);
+  const dat = await goi("/quan-ly/tao-ma", form({ ma: "mat-khau-1", ma2: "mat-khau-1" }));
+  assert.equal(dat.status, 303);
+  const cookie = dat.headers.get("set-cookie").split(";")[0];
+  assert.doesNotMatch(cookie, /mat-khau-1/); // cookie giữ bản băm, không chứa mã thô
+  assert.equal((await goi("/admin", { headers: { cookie } })).status, 200);
+  assert.equal((await goi("/quan-ly", { headers: { cookie } })).status, 200);
+  assert.equal((await goi("/admin?key=mat-khau-1")).status, 200);
+  assert.equal((await goi("/admin?key=sai")).status, 401);
+  assert.equal((await goi("/quan-ly/tao-ma", form({ ma: "khac-nua", ma2: "khac-nua" }))).status, 409);
+  assert.equal((await goi("/quan-ly/dang-nhap", form({ key: "sai" }))).status, 401);
+  assert.equal((await goi("/quan-ly/dang-nhap", form({ key: "mat-khau-1" }))).status, 303);
+  assert.match(await (await goi("/quan-ly")).text(), /dang-nhap/); // đã có mã → form đăng nhập, không hỏi đặt mã nữa
+});

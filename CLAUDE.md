@@ -12,14 +12,16 @@ việc phải làm trên Facebook/Cloudflare.
 - Khoá AI: người dùng chưa có thì chỉ họ đăng ký Kyma qua link của lớp https://kymaapi.com?aff=kz4ttRu (API Keys → tạo khoá → nạp ít).
   Dùng Kyma → sửa `wrangler.toml`: `AI_BASE_URL = "https://kymaapi.com/v1"`, `MODEL = "gpt-5.6-sol,claude-haiku-4-5,gpt-5.6-luna"`.
   Dùng OpenAI → giữ nguyên hai dòng đó. Hỏi họ dùng loại nào ở bước 2.2 trước khi deploy.
-- `FB_VERIFY_TOKEN` và `ADMIN_KEY`: tự sinh chuỗi ngẫu nhiên 24+ ký tự, đặt secret, rồi cho người dùng biết MỘT LẦN để họ lưu
-  (`ADMIN_KEY` là mật khẩu vào trang quản lý `/quan-ly`). "Đặt lại ADMIN_KEY" = sinh khoá mới, đặt lại secret, báo khoá mới.
-- Trước khi deploy lần đầu: `node -v` (≥ 20), `npm install`, `npx wrangler whoami` (chưa đăng nhập thì `npx wrangler login`), `npm test` (9 bài phải pass).
+- `FB_VERIFY_TOKEN`: tự sinh chuỗi ngẫu nhiên 24+ ký tự, đặt secret, rồi cho người dùng biết MỘT LẦN (dùng ở bước 3.1).
+- Mã đăng nhập trang quản lý `/quan-ly`: KHÔNG sinh, KHÔNG đặt secret. Người dùng tự đặt khi mở `/quan-ly` lần đầu (bước 2.6);
+  worker lưu băm ở KV khoá `admin-key`. Cần gọi `/admin` để kiểm tra giúp thì hỏi người dùng mã của họ, dùng xong không in lại.
+  "Xoá mã đăng nhập" / quên mã: `npx wrangler kv key delete admin-key --binding KHO --remote` rồi bảo họ mở lại `/quan-ly` đặt mã mới.
+- Trước khi deploy lần đầu: `node -v` (≥ 20), `npm install`, `npx wrangler whoami` (chưa đăng nhập thì `npx wrangler login`), `npm test` (10 bài phải pass).
 - `wrangler.toml` có 5 chỗ `<...>`: `name`, `account_id` (từ `npx wrangler whoami`), `FB_PAGE_ID`, `FB_APP_ID`, `id` của KV
   (từ `npx wrangler kv namespace create KHO`). Điền xong mới `npx wrangler deploy`.
 - Sau mỗi lần sửa `kien-thuc/*.md` hoặc `src/nhan-cach.js` phải `npx wrangler deploy` thì bot mới đổi. Luật dặn thêm ở `/quan-ly` thì không cần deploy.
-- Kiểm tra bot không tốn Facebook: `POST /admin/thu?key=ADMIN_KEY` với `{"psid":"a","text":"..."}`; xoá phiên thử bằng `{"psid":"a","xoa":true}`.
-- Xem trạng thái: `GET /admin?key=ADMIN_KEY` → `bot`, `webhookLanCuoi`, `quetLanCuoi`, `khachCanNguoi`, `loiGanDay`.
+- Kiểm tra bot không tốn Facebook: `POST /admin/thu?key=<mã đăng nhập>` với `{"psid":"a","text":"..."}`; xoá phiên thử bằng `{"psid":"a","xoa":true}`.
+- Xem trạng thái: `GET /admin?key=<mã đăng nhập>` → `bot`, `webhookLanCuoi`, `quetLanCuoi`, `khachCanNguoi`, `loiGanDay`.
   Webhook "chưa nhận" nhưng `quetLanCuoi` mới = bot vẫn chạy bằng đường quét mỗi phút; hướng người dùng làm lại 3.4 → 3.3 → 3.1.
 - Việc trên Facebook (tạo app, token, webhook, "Kiểm soát cuộc trò chuyện") không làm được bằng lệnh: chỉ dẫn từng cú bấm theo checklist, rồi kiểm tra kết quả bằng `/admin`.
 - Tên miền riêng cho trang quản lý (5.7): bỏ `#` ở khối `routes` trong `wrangler.toml`, đổi `pattern` và `zone_name` theo tên miền

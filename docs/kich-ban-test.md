@@ -26,8 +26,9 @@ Thử AI không tốn Facebook: nói với Claude Code "hỏi thử bot: [câu c
 
 | # | Vai | Làm gì | Mong đợi |
 |---|---|---|---|
-| Q1 | Chủ | Mở /quan-ly, gõ sai khoá | Báo "Sai khoá, thử lại" |
-| Q2 | Chủ | Gõ đúng ADMIN_KEY | Vào bàn trực; đóng tab mở lại không phải gõ khoá nữa (cookie 30 ngày) |
+| Q0 | Chủ | Mở /quan-ly lần đầu (chưa đặt mã) | Màn "Lần đầu mở bàn trực": gõ mã 2 lần; lệch nhau hoặc dưới 6 ký tự thì báo đỏ; đúng thì vào thẳng bàn trực |
+| Q1 | Chủ | Thoát, mở /quan-ly, gõ sai mã | Báo "Sai mã, thử lại"; không còn hỏi đặt mã nữa |
+| Q2 | Chủ | Gõ đúng mã đã đặt | Vào bàn trực; đóng tab mở lại không phải gõ mã nữa (cookie 30 ngày) |
 | Q3 | Chủ | Nhìn thanh trên | Có "webhook … trước", "quét … trước", công tắc "Bot đang bật" xanh |
 | Q4 | Chủ | Bấm lọc "Cần người" | Chỉ còn khách có nhãn vàng; số đỏ trên tab Hội thoại bằng số dòng |
 | Q5 | Chủ | Bấm một khách | Cột giữa hiện chat: khách trắng, bot xanh ngọc, chủ gõ tay vàng, phần mềm khác tím. Cột "Thông tin" hiện "đang tóm tắt…" rồi ra các khối: khách là ai · bước · đã trao đổi · còn thiếu · việc tiếp theo |

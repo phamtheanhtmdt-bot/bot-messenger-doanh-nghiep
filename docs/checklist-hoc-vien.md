@@ -65,15 +65,17 @@ Khách nhắn Fanpage ──► Facebook gõ cửa Worker (webhook, tức thì)
 - [ ] 2.2 Claude tạo kho nhớ (`kv namespace create KHO`) và điền 5 chỗ `<...>` trong `wrangler.toml`. Claude sẽ hỏi bạn
       **tên worker** (chữ thường không dấu, ví dụ `bot-an-spa`), **ID Trang** (1.6), **App ID** (1.1),
       và **khoá AI của bạn mua ở đâu** (Kyma hay OpenAI) để đặt `AI_BASE_URL` + `MODEL` cho đúng.
-- [ ] 2.3 Claude chạy `npm test` (9 bài tự kiểm, phải pass hết) rồi `npx wrangler deploy`. Đạt khi Claude đưa bạn địa chỉ
+- [ ] 2.3 Claude chạy `npm test` (10 bài tự kiểm, phải pass hết) rồi `npx wrangler deploy`. Đạt khi Claude đưa bạn địa chỉ
       `https://<tên>.<tài-khoản>.workers.dev` và mở lên thấy chữ "Bot Messenger đang chạy".
-- [ ] 2.4 Đặt 5 secret. Claude sẽ hỏi lần lượt, bạn dán vào chat: **Page token** (1.3), **App Secret** (1.4), **khoá AI** (phần 0).
-      Hai cái còn lại (`FB_VERIFY_TOKEN`, `ADMIN_KEY`) Claude tự sinh chuỗi ngẫu nhiên và cho bạn biết để giữ.
-      `ADMIN_KEY` chính là **mật khẩu vào trang quản lý** — lưu vào nơi bạn giữ mật khẩu.
-      Đạt khi Claude báo 5 dòng "Success! Uploaded secret".
+- [ ] 2.4 Đặt 4 secret. Claude sẽ hỏi lần lượt, bạn dán vào chat: **Page token** (1.3), **App Secret** (1.4), **khoá AI** (phần 0).
+      Cái còn lại (`FB_VERIFY_TOKEN`) Claude tự sinh chuỗi ngẫu nhiên và cho bạn biết để dùng ở 3.1.
+      Mật khẩu vào trang quản lý KHÔNG phải secret: bạn tự đặt ở bước 2.6.
+      Đạt khi Claude báo 4 dòng "Success! Uploaded secret".
 - [ ] 2.5 Kiểm tra bắt tay: nói **"kiểm tra bắt tay webhook"**. Đạt khi Claude báo worker trả đúng challenge.
-- [ ] 2.6 Mở trang quản lý: vào `https://<worker>/quan-ly` trên trình duyệt → gõ `ADMIN_KEY` → **Vào bàn trực**.
-      Đạt khi thấy màn bốn cột, thanh trên có "Bot đang bật", chưa có khách nào. Đóng tab mở lại không phải gõ khoá (nhớ 30 ngày).
+- [ ] 2.6 Mở trang quản lý lần đầu: vào `https://<worker>/quan-ly` trên trình duyệt → màn **"Lần đầu mở bàn trực"** hỏi bạn
+      **tự đặt mã đăng nhập** (từ 6 ký tự, gõ 2 lần) → **Đặt mã và vào bàn trực**. Mã do bạn chọn, không ai sinh sẵn; lưu vào nơi bạn giữ mật khẩu.
+      Đạt khi thấy màn bốn cột, thanh trên có "Bot đang bật", chưa có khách nào. Đóng tab mở lại không phải gõ mã (nhớ 30 ngày).
+      Muốn Claude kiểm tra bot giúp (gọi `/admin`), bạn cho Claude mã đăng nhập khi được hỏi.
 
 ## 3. Nối Facebook với worker (làm tay, Claude kiểm tra)
 
@@ -143,10 +145,11 @@ Trang có hai màn, chọn ở thanh trên. Làm lần lượt để quen tay:
 
 - [ ] Mỗi sáng mở trang quản lý: lọc **Cần người** để trả lời khách đang chờ; tab **Chăm sóc lại** duyệt đợt hôm nay.
 - [ ] Đổi giá, đổi sản phẩm: sửa `kien-thuc/doanh-nghiep.md` → "deploy lại". Đổi cách nói chuyện nhỏ: dùng "Dặn thêm cho em", không cần deploy.
-- [ ] Không bao giờ đưa token, secret, khoá AI, `ADMIN_KEY` vào file trong git, vào chat nhóm, hay trang web lạ.
+- [ ] Không bao giờ đưa token, secret, khoá AI, mã đăng nhập trang quản lý vào file trong git, vào chat nhóm, hay trang web lạ.
 - [ ] Thanh trên báo webhook "chưa có" nhưng quét vẫn chạy: bot hoạt động nhưng chậm ~1 phút; kiểm 3.4 → 3.3 → 3.1 → token (1.3).
 - [ ] Bot gửi lỗi "app khác đang kiểm soát": xem 3.4, chỉ một app được bật "Kiểm soát cuộc trò chuyện".
 - [ ] Bot trả lời câu `CAU_KHI_AI_LOI` cho mọi khách: khoá AI hết tiền hoặc sai. Nói với Claude **"xem /admin có lỗi gì"** → đọc `loiGanDay`.
       Hết tiền thì nạp thêm ở nhà cung cấp (Kyma: https://kymaapi.com?aff=kz4ttRu).
 - [ ] Gửi tay báo "khách im quá 24 giờ": luật Facebook, dùng màn Chăm sóc lại.
-- [ ] Quên `ADMIN_KEY`: nói với Claude **"đặt lại ADMIN_KEY"** → Claude sinh khoá mới và đặt secret; khoá cũ hết tác dụng.
+- [ ] Quên mã đăng nhập trang quản lý: nói với Claude **"xoá mã đăng nhập trang quản lý"** → Claude xoá mã cũ trong kho nhớ;
+      mở lại `/quan-ly` sẽ hỏi đặt mã mới. Mã cũ hết tác dụng, máy nào đang đăng nhập cũng phải gõ lại.

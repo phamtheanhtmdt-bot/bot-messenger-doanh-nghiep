@@ -3,10 +3,10 @@
 // Đường đi:
 //   GET  /webhook   Facebook gọi một lần để "bắt tay" (kiểm FB_VERIFY_TOKEN)
 //   POST /webhook   Facebook gõ cửa mỗi khi có tin mới → trả 200 ngay, xử lý nền
-//   GET  /admin?key=ADMIN_KEY            trạng thái bot, khách cần người, lỗi gần đây
+//   GET  /admin?key=MÃ-ĐĂNG-NHẬP         trạng thái bot, khách cần người, lỗi gần đây
 //   POST /admin/bot?key=...&trang_thai=bat|tat   tắt/bật bot toàn cục
 //   POST /admin/thu?key=...  body {"psid":"thu","text":"..."}  hỏi AI mà KHÔNG gửi Facebook
-//   GET  /quan-ly                          trang quản lý (đăng nhập bằng ADMIN_KEY, giữ cookie 30 ngày)
+//   GET  /quan-ly                          trang quản lý (lần đầu tự đặt mã đăng nhập, lưu băm trong KV; cookie 30 ngày)
 //   /admin/hoi-thoai, /admin/khach-day-du, /admin/tom-tat, /admin/dan*, /admin/cham-soc*  → src/quan-ly.js
 //
 // Bot im khi: bot bị tắt, hoặc người thật (chủ doanh nghiệp) vừa trả lời khách đó trong GIO_NGUOI_TRUC giờ.
@@ -179,44 +179,77 @@ async function traLoi(env, psid, ls, noiDung) {
   return { ...kq, traLoi };
 }
 
-// Khoá quản trị: ?key= trên URL (cách cũ, cho script) hoặc cookie qk (trang quản lý đăng nhập một lần).
-function layKey(request, url) {
-  const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i);
-  if (bearer) return bearer[1];
-  const k = url.searchParams.get("key");
-  if (k) return k;
-  const m = (request.headers.get("cookie") || "").match(/(?:^|;\s*)qk=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : "";
+// Mã đăng nhập trang quản lý: chủ doanh nghiệp TỰ ĐẶT lần đầu mở /quan-ly, lưu dạng băm SHA-256 trong KV (khoá "admin-key").
+// Secret ADMIN_KEY (nếu có) vẫn được nhận, dành cho script/test. Quên mã: xoá khoá KV "admin-key" → mở /quan-ly đặt lại.
+async function bam(s) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
 }
-const coQuyen = (request, url, env) => Boolean(env.ADMIN_KEY) && layKey(request, url) === env.ADMIN_KEY;
+const layMaBam = env => env.KHO.get("admin-key");
+async function cacMaHopLe(env) {
+  const ds = [];
+  const kv = await layMaBam(env);
+  if (kv) ds.push(kv);
+  if (env.ADMIN_KEY) ds.push(await bam(env.ADMIN_KEY));
+  return ds;
+}
+// Trình khoá: Bearer / ?key= là mã thô (cho script, Claude Code); cookie qk giữ bản băm (trang quản lý), không chứa mã thô.
+async function coQuyen(request, url, env) {
+  const ds = await cacMaHopLe(env);
+  if (!ds.length) return false;
+  const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i);
+  const tho = bearer ? bearer[1] : url.searchParams.get("key");
+  if (tho) return ds.includes(await bam(tho));
+  const m = (request.headers.get("cookie") || "").match(/(?:^|;\s*)qk=([^;]+)/);
+  return Boolean(m) && ds.includes(decodeURIComponent(m[1]));
+}
+const cookieDangNhap = h => `qk=${h}; Path=/; Max-Age=${30 * 86400}; HttpOnly; Secure; SameSite=Lax`;
+const veQuanLy = setCookie => new Response(null, { status: 303, headers: { location: "/quan-ly", "set-cookie": setCookie } });
 
-// Trang quản lý: GET hiện trang (hoặc form đăng nhập), POST /quan-ly/dang-nhap đặt cookie, POST /quan-ly/thoat xoá cookie.
+// Trang quản lý: chưa có mã → form đặt mã (POST /quan-ly/tao-ma, chỉ nhận khi chưa có); có mã → form đăng nhập
+// (POST /quan-ly/dang-nhap đặt cookie 30 ngày); /quan-ly/thoat xoá cookie.
 async function trangQuanLy(request, url, env) {
   const html = (t, status = 200, headers = {}) => new Response(t, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", ...headers } });
+  const docForm = async ten => { const f = await request.formData().catch(() => null); return Object.fromEntries(ten.map(k => [k, f ? String(f.get(k) || "").trim() : ""])); };
+  const chuaCoMa = async () => !env.ADMIN_KEY && !(await layMaBam(env));
+  if (url.pathname === "/quan-ly/tao-ma" && request.method === "POST") {
+    if (!(await chuaCoMa())) return html(formDangNhap("Mã đã được đặt rồi. Đăng nhập bằng mã đó."), 409);
+    const { ma, ma2 } = await docForm(["ma", "ma2"]);
+    if (ma.length < 6) return html(formTaoMa("Mã phải từ 6 ký tự."), 400);
+    if (ma !== ma2) return html(formTaoMa("Hai lần gõ không giống nhau."), 400);
+    const h = await bam(ma);
+    await env.KHO.put("admin-key", h);
+    return veQuanLy(cookieDangNhap(h));
+  }
   if (url.pathname === "/quan-ly/dang-nhap" && request.method === "POST") {
-    const form = await request.formData().catch(() => null);
-    const key = form ? String(form.get("key") || "").trim() : "";
-    if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return html(formDangNhap("Sai khoá, thử lại."), 401);
-    return new Response(null, { status: 303, headers: { location: "/quan-ly", "set-cookie": `qk=${encodeURIComponent(key)}; Path=/; Max-Age=${30 * 86400}; HttpOnly; Secure; SameSite=Lax` } });
+    const { key } = await docForm(["key"]);
+    const h = await bam(key);
+    if (!key || !(await cacMaHopLe(env)).includes(h)) return html(formDangNhap("Sai mã, thử lại."), 401);
+    return veQuanLy(cookieDangNhap(h));
   }
-  if (url.pathname === "/quan-ly/thoat") {
-    return new Response(null, { status: 303, headers: { location: "/quan-ly", "set-cookie": "qk=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax" } });
-  }
-  if (!coQuyen(request, url, env)) return html(formDangNhap(), 401);
-  return html(TRANG_QUAN_LY);
+  if (url.pathname === "/quan-ly/thoat") return veQuanLy("qk=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax");
+  if (await coQuyen(request, url, env)) return html(TRANG_QUAN_LY);
+  return (await chuaCoMa()) ? html(formTaoMa()) : html(formDangNhap(), 401);
 }
 
-function formDangNhap(loi = "") {
-  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Đăng nhập · Bàn trực bot</title>
+function khungForm(tieuDe, than) {
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${tieuDe} · Bàn trực bot</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#EEF1F3;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:#1A232B}
 form{background:#fff;border:1px solid #D9DFE3;border-radius:14px;padding:26px 28px;width:min(360px,90vw);box-shadow:0 8px 24px -12px rgba(20,30,40,.18)}
 h1{font-size:17px;margin:0 0 4px}p{margin:0 0 14px;color:#4B5761;font-size:13px}input{width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1px solid #D9DFE3;border-radius:9px;margin-bottom:10px}
 button{width:100%;font:inherit;font-weight:600;padding:10px;border:0;border-radius:9px;background:#0E6B6B;color:#fff;cursor:pointer}.loi{color:#C0392B;font-size:13px;margin-bottom:8px}</style>
-<form method="post" action="/quan-ly/dang-nhap"><h1>Bàn trực bot</h1><p>Nhập khoá quản trị (ADMIN_KEY). Máy này sẽ nhớ 30 ngày.</p>${loi ? `<div class="loi">${loi}</div>` : ""}<input type="password" name="key" placeholder="Khoá quản trị" autofocus autocomplete="current-password"><button>Vào bàn trực</button></form>`;
+${than}`;
+}
+const oLoi = loi => (loi ? `<div class="loi">${loi}</div>` : "");
+function formDangNhap(loi = "") {
+  return khungForm("Đăng nhập", `<form method="post" action="/quan-ly/dang-nhap"><h1>Bàn trực bot</h1><p>Nhập mã đăng nhập bạn đã đặt. Máy này sẽ nhớ 30 ngày.</p>${oLoi(loi)}<input type="password" name="key" placeholder="Mã đăng nhập" autofocus autocomplete="current-password"><button>Vào bàn trực</button></form>`);
+}
+function formTaoMa(loi = "") {
+  return khungForm("Đặt mã đăng nhập", `<form method="post" action="/quan-ly/tao-ma"><h1>Lần đầu mở bàn trực</h1><p>Bạn tự chọn <b>mã đăng nhập</b> (từ 6 ký tự). Về sau vào trang quản lý bằng mã này, hãy lưu ở nơi bạn giữ mật khẩu.</p>${oLoi(loi)}<input type="password" name="ma" placeholder="Mã bạn chọn" minlength="6" required autofocus autocomplete="new-password"><input type="password" name="ma2" placeholder="Gõ lại mã" minlength="6" required autocomplete="new-password"><button>Đặt mã và vào bàn trực</button></form>`);
 }
 
 async function admin(request, url, env, ctx) {
-  if (!coQuyen(request, url, env)) return json({ loi: "sai key" }, 401);
+  if (!(await coQuyen(request, url, env))) return json({ loi: "sai key" }, 401);
   const p = url.pathname;
   const kq = await xuLyQuanLy(request.clone(), url, env, ctx);
   if (kq) return kq;

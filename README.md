@@ -36,7 +36,7 @@ Chạy hoàn toàn trên Cloudflare Worker (gói miễn phí đủ dùng), khôn
 
 ## Trang quản lý `/quan-ly`
 
-Đăng nhập một lần bằng `ADMIN_KEY`, máy nhớ 30 ngày (cookie). Hai màn:
+Lần đầu mở, trang hỏi bạn **tự đặt mã đăng nhập** (không có mã sinh sẵn); mã lưu dạng băm trong KV. Đăng nhập một lần, máy nhớ 30 ngày (cookie). Hai màn:
 
 - **Hội thoại** (bốn cột): danh sách khách 90 ngày với nhãn ai đang trực (bot / bạn / cần người / lỗi) · khung chat, trả lời tay
   (gửi xong bot im 6 giờ với khách đó) · **Thông tin = AI tóm tắt cả cuộc chat** (khách là ai, đang ở bước nào trong 5 bước,
@@ -46,9 +46,9 @@ Chạy hoàn toàn trên Cloudflare Worker (gói miễn phí đủ dùng), khôn
   và soạn một câu riêng cho từng người, tối đa `CHAM_TOI_DA` khách/đợt. Bạn sửa/tick/duyệt rồi gửi bằng Claude extension trong Chrome
   (né rào 24 giờ của Facebook), hoặc nút API bằng thẻ Human Agent nếu app đã được Facebook duyệt. Xem `docs/cham-soc-lai.md`.
 
-Trang chỉ là lớp vỏ gọi các đường `/admin/*` bên dưới; ai có `ADMIN_KEY` gọi thẳng API cũng được.
+Trang chỉ là lớp vỏ gọi các đường `/admin/*` bên dưới; ai có mã đăng nhập gọi thẳng API cũng được.
 
-## Cửa quản trị (thay `KEY` bằng ADMIN_KEY, hoặc dùng cookie sau khi đăng nhập /quan-ly)
+## Cửa quản trị (thay `KEY` bằng mã đăng nhập bạn đã đặt, hoặc dùng cookie sau khi đăng nhập /quan-ly)
 
 ```
 GET  /admin?key=KEY                               trạng thái, khách cần người, lỗi gần đây, webhook/quét lần cuối
@@ -74,8 +74,11 @@ POST /admin/cham-soc/gui-api {"psid"}            gửi thẳng bằng thẻ HUMA
 
 ## Secrets (không bao giờ ghi vào file trong git)
 
-`FB_PAGE_TOKEN`, `FB_APP_SECRET`, `FB_VERIFY_TOKEN`, `ADMIN_KEY`, `OPENAI_API_KEY`. Claude Code đặt giúp bằng
-`npx wrangler secret put`, bạn chỉ dán giá trị vào chat khi được hỏi. `ADMIN_KEY` là mật khẩu vào trang quản lý.
+`FB_PAGE_TOKEN`, `FB_APP_SECRET`, `FB_VERIFY_TOKEN`, `OPENAI_API_KEY`. Claude Code đặt giúp bằng
+`npx wrangler secret put`, bạn chỉ dán giá trị vào chat khi được hỏi.
+Mật khẩu trang quản lý không phải secret: bạn tự đặt lần đầu mở `/quan-ly`, worker lưu bản băm SHA-256 ở KV (khoá `admin-key`).
+Quên mã: xoá khoá đó (`npx wrangler kv key delete admin-key --binding KHO --remote`) rồi mở lại `/quan-ly` đặt mã mới.
+Secret `ADMIN_KEY` (tuỳ chọn) vẫn được nhận nếu bạn muốn một khoá cố định cho script.
 
 ## Khoá AI mua ở đâu
 
@@ -103,7 +106,7 @@ Nạp ít (10–20 USD), không bật nạp tiền tự động.
 ## Chạy thử tại máy / kiểm tra
 
 ```
-npm test                          # 9 bài tự kiểm, không gọi Facebook hay AI
+npm test                          # 10 bài tự kiểm, không gọi Facebook hay AI
 npx wrangler dev --local          # chạy worker ở máy (cần .dev.vars, xem .dev.vars.example)
 ```
 
