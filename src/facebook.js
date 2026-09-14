@@ -58,13 +58,25 @@ export function catTin(text, gioiHan = 1900) {
 export async function guiTin(env, psid, text) {
   const ketQua = [];
   for (const doan of catTin(text)) {
-    ketQua.push(await goiGraph(env, {
+    const kq = await goiGraph(env, {
       recipient: { id: psid },
       messaging_type: "RESPONSE",
       message: { text: doan, metadata: "bot-tiem" },
-    }));
+    });
+    // nhớ mid tin mình gửi, để lúc quét hộp thư phân biệt "bot gửi" với "người/app khác gửi"
+    if (kq.message_id && env.KHO) await env.KHO.put(`sent:${kq.message_id}`, "1", { expirationTtl: 60 * 60 * 48 });
+    ketQua.push(kq);
   }
   return ketQua;
+}
+
+// Đọc các hội thoại mới nhất qua Graph API (đường này không bị Handover chặn).
+export async function docHopThu(env, soLuong = 25) {
+  const url = `${GRAPH}/${env.FB_PAGE_ID}/conversations?fields=id,updated_time,participants,messages.limit(6){id,message,from,created_time,attachments}&limit=${soLuong}&access_token=${env.FB_PAGE_TOKEN}`;
+  const r = await fetch(url);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.error) throw new Error(`Đọc hộp thư: ${d.error?.message || r.status}`);
+  return d.data || [];
 }
 
 // ===== Handover Protocol (Định tuyến cuộc trò chuyện) =====
@@ -125,4 +137,17 @@ export async function layTenKhach(env, psid) {
     if (d.error) return "";
     return d.name || [d.first_name, d.last_name].filter(Boolean).join(" ");
   } catch { return ""; }
+}
+
+// Gửi MỘT tin ngoài cửa sổ 24 giờ bằng thẻ HUMAN_AGENT (cho phép tới 7 ngày sau tin cuối của khách).
+// Chỉ chạy khi app đã được Facebook duyệt quyền Human Agent; chưa duyệt thì Facebook trả lỗi và hàm ném lỗi.
+export async function guiTinNguoiTruc(env, psid, text) {
+  const kq = await goiGraph(env, {
+    recipient: { id: psid },
+    messaging_type: "MESSAGE_TAG",
+    tag: "HUMAN_AGENT",
+    message: { text: catTin(text)[0] || "", metadata: "bot-tiem cham-soc" },
+  });
+  if (kq.message_id && env.KHO) await env.KHO.put(`sent:${kq.message_id}`, "1", { expirationTtl: 60 * 60 * 48 });
+  return kq;
 }

@@ -6,24 +6,36 @@ compatibility_date = "2026-06-04"
 account_id = "<account-id-tu-npx-wrangler-whoami>"
 workers_dev = true
 
+# Muốn trang quản lý có tên miền riêng (ví dụ bot.tencuaban.com) thì bỏ dấu # ở 3 dòng dưới, đổi tên miền,
+# và thêm bản ghi DNS trên Cloudflare: AAAA  bot  100::  Proxied. Không có tên miền riêng thì dùng địa chỉ workers.dev, vẫn chạy đủ.
+# routes = [
+#   { pattern = "bot.tencuaban.com/*", zone_name = "tencuaban.com" },
+# ]
+
 [vars]
 CHE_DO = "worker"                 # worker tự gọi AI ở AI_BASE_URL (để nguyên)
 FB_PAGE_ID = "<id-trang-facebook>"       # Trang → Giới thiệu → ID Trang
 FB_APP_ID = "<id-app-developers>"        # developers.facebook.com → app → App ID
 AI_BASE_URL = "https://api.openai.com/v1"    # OpenAI, hoặc dịch vụ tương thích OpenAI (ví dụ https://kymaapi.com/v1)
 MODEL = "gpt-4.1"                        # một hoặc nhiều tên cách nhau dấu phẩy, con đầu lỗi thử con sau (tên phải có ở nhà cung cấp bạn dùng)
-GIO_NGUOI_TRUC = "6"              # chủ doanh nghiệp tự trả lời xong, bot im bấy nhiêu giờ với khách đó
+GIO_NGUOI_TRUC = "6"              # chủ doanh nghiệp tự trả lời xong, bot im bấy nhiêu giờ với khách đó (tin do Pancake/Botcake gửi KHÔNG làm bot im)
+PHUT_TUOI = "10"                  # khi quét hộp thư, chỉ trả lời tin khách mới trong bấy nhiêu phút; cũ hơn chỉ ghi lịch sử
 PHUT_CHO_NGUOI = "0"              # bot tự "chuyển người" thì im bấy nhiêu phút (0 = không im, chỉ ghi sổ; bot chỉ im khi người thật đã trả lời)
+NGAY_CHAM = "3"                   # chăm sóc lại: khách im bấy nhiêu ngày thì vào đợt; đã chăm thì chờ bấy nhiêu ngày mới chăm tiếp
+CHAM_TOI_DA = "30"                # mỗi đợt AI soạn câu cho tối đa bấy nhiêu khách (giữ nhịp gửi, tránh bị Facebook để ý)
 
 [[kv_namespaces]]
 binding = "KHO"
 id = "<id-tu-npx-wrangler-kv-namespace-create-KHO>"
 
-# Cho phép import file .md làm chuỗi (sách giáo khoa của bot)
+# Cho phép import file .md (sách giáo khoa của bot) và .html (trang quản lý) làm chuỗi
 [[rules]]
 type = "Text"
-globs = ["**/*.md"]
+globs = ["**/*.md", "**/*.html"]
 fallthrough = true
+
+[triggers]
+crons = ["* * * * *", "0 23 * * *"]   # mỗi phút: tự đọc hộp thư qua Graph API (phòng webhook không tới) · 23:00 UTC = 06:00 VN: lập đợt chăm sóc lại
 
 [observability]
 enabled = true

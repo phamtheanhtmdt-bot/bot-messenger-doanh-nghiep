@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<title>Bàn trực bot Messenger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EEF1F3; --panel:#FFFFFF; --panel2:#F6F8F9; --line:#D9DFE3; --line2:#E8ECEF;
+  --ink:#1A232B; --ink2:#4B5761; --ink3:#7A8791;
+  --accent:#0E6B6B; --accent-ink:#FFFFFF; --accent-soft:#DDEFEE;
+  --bot:#DDEFEE; --bot-ink:#0B4A4A; --human:#FBEBD0; --human-ink:#6B4300; --khach:#FFFFFF; --app:#ECE7F5; --app-ink:#4A3670;
+  --good:#2E7D32; --warn:#B7791F; --bad:#C0392B; --warn-soft:#FBF1DC; --bad-soft:#F9E3E0; --good-soft:#E3F1E4;
+  --chat:#E9E4DD; --shadow:0 1px 2px rgba(20,30,40,.08), 0 8px 24px -12px rgba(20,30,40,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#131A1F; --panel:#1B242B; --panel2:#202B33; --line:#2E3A43; --line2:#27323A;
+    --ink:#ECF0F2; --ink2:#B4BFC7; --ink3:#7F8C96;
+    --accent:#4FB3B0; --accent-ink:#0B1A1A; --accent-soft:#1E3A3A;
+    --bot:#1E3A3A; --bot-ink:#BFE6E4; --human:#3E2F12; --human-ink:#F2D49A; --khach:#28333B; --app:#2E2740; --app-ink:#CDBFEF;
+    --good:#7BC67E; --warn:#E3B562; --bad:#EF8A7C; --warn-soft:#3A2E14; --bad-soft:#3E2220; --good-soft:#1F3622;
+    --chat:#1F272D; --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:13px;line-height:1.4;padding:10px 12px;display:flex;flex-direction:column;overflow:hidden}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3,h4{margin:0}
+button{font:inherit;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+input,textarea{font:inherit;color:inherit}
+textarea{resize:vertical}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.sp{flex:1}
+
+.app{width:100%;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:12px;padding:7px 14px;flex:none;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--accent);display:inline-block;position:relative}
+.logo i::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--accent-ink)}
+.nav{display:flex;gap:2px;margin-left:6px}
+.nav button{padding:7px 12px;border-radius:8px;color:var(--ink2);border:0;background:transparent;font-weight:500;position:relative}
+.nav button.on{background:var(--panel2);color:var(--ink);font-weight:600}
+.nav .n{position:absolute;top:-4px;right:-2px;background:var(--bad);color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:1px 5px;line-height:1.3}
+.nav .n:empty{display:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent;white-space:nowrap}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.on{color:var(--good);background:var(--good-soft)}
+.pill.off{color:var(--bad);background:var(--bad-soft)}
+.pill.warn{color:var(--warn);background:var(--warn-soft)}
+.pill.quiet::before{display:none}
+.pill.quiet{color:var(--ink2);background:var(--panel2);border-color:var(--line2);font-weight:500}
+.switch{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;border:0;background:transparent;color:var(--ink);padding:0}
+.switch i{width:38px;height:22px;border-radius:11px;background:var(--line);position:relative;display:inline-block;transition:background .15s}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.switch.on i{background:var(--good)} .switch.on i::after{left:19px}
+.avatar{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;font-weight:700;font-size:13px;background:var(--ink3)}
+.ibtn{border:1px solid var(--line);background:var(--panel);color:var(--ink2);border-radius:8px;padding:6px 10px;font-weight:500;font-size:12.5px;white-space:nowrap}
+.ibtn:hover:not(:disabled){border-color:var(--ink3);color:var(--ink)}
+.ibtn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ibtn.warn{color:var(--warn);border-color:var(--warn)}
+.ibtn.bad{color:var(--bad);border-color:var(--bad)}
+.ibtn.sm{padding:3px 8px;font-size:11.5px}
+a.ibtn{text-decoration:none;display:inline-block}
+
+.cols{display:grid;flex:1;min-height:0;overflow:hidden}
+.col{min-width:0;min-height:0;display:flex;flex-direction:column;border-right:1px solid var(--line);overflow:hidden}
+.col:last-child{border-right:0}
+.col-h{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line2);min-height:44px;flex:none;flex-wrap:wrap}
+.col-h h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2)}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;color:var(--ink3);flex:1;min-width:120px}
+.search input{border:0;background:transparent;flex:1;min-width:0;outline:0}
+.filters{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--line2);flex-wrap:wrap;flex:none}
+.filters button{border:1px solid var(--line2);background:var(--panel2);border-radius:999px;padding:2px 9px;font-size:11.5px;color:var(--ink2)}
+.filters button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+
+.list{overflow:auto;flex:1;min-height:0}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:9px;padding:7px 12px;border-bottom:1px solid var(--line2);align-items:start;text-align:left;width:100%;background:transparent;border-left:3px solid transparent;border-top:0;border-right:0;color:inherit}
+.row:hover{background:var(--panel2)}
+.row.sel{background:var(--accent-soft);border-left-color:var(--accent)}
+.row .name{font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.row .last{color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-size:12.5px}
+.row .last::before{content:"↩ ";color:var(--ink3)}
+.row .last.kh::before{content:""}
+.row .t{color:var(--ink3);font-size:11.5px;white-space:nowrap}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.tag.can-nguoi{background:var(--warn-soft);color:var(--warn)}
+.tag.bot{background:var(--bot);color:var(--bot-ink)}
+.tag.im{background:var(--panel2);color:var(--ink3);border:1px solid var(--line2)}
+.tag.loi{background:var(--bad-soft);color:var(--bad)}
+.tag.nguoi{background:var(--human);color:var(--human-ink)}
+.empty{padding:24px 14px;color:var(--ink3);text-align:center;font-size:12.5px}
+
+.chat-h{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--line2);flex:none;flex-wrap:wrap}
+.chat-h .n{font-weight:700;font-size:14px}
+.chat-h .sub{color:var(--ink3);font-size:12px}
+.chat{flex:1;min-height:0;background:var(--chat);overflow:auto;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.day{align-self:center;background:var(--panel);color:var(--ink2);font-size:11.5px;padding:2px 10px;border-radius:999px;margin:4px 0}
+.msg{max-width:72%;padding:6px 10px;border-radius:14px;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.05);white-space:pre-wrap;word-break:break-word}
+.msg .who{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;opacity:.85}
+.msg .t{font-size:10.5px;opacity:.7;margin-top:3px;text-align:right}
+.msg.khach{align-self:flex-start;background:var(--khach);border-bottom-left-radius:4px}
+.msg.bot,.msg.nao{align-self:flex-end;background:var(--bot);color:var(--bot-ink);border-bottom-right-radius:4px}
+.msg.nguoi{align-self:flex-end;background:var(--human);color:var(--human-ink);border-bottom-right-radius:4px}
+.msg.pmk,.msg.cham{align-self:flex-end;background:var(--app);color:var(--app-ink);border-bottom-right-radius:4px}
+.sys{align-self:center;font-size:11.5px;color:var(--ink2);background:var(--panel);border:1px dashed var(--line);padding:3px 10px;border-radius:8px;text-align:center}
+.compose{border-top:1px solid var(--line2);padding:8px 12px;display:flex;flex-direction:column;gap:6px;flex:none}
+.compose .box{display:flex;gap:8px;align-items:flex-end}
+.compose textarea{flex:1;min-height:38px;max-height:90px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.loi-box{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:6px 10px;font-size:12.5px}
+.loi-box:empty{display:none}
+
+.info{padding:10px 12px;display:flex;flex-direction:column;gap:9px;overflow:auto;flex:1;min-height:0}
+.state{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:10px;font-weight:600;font-size:12.5px}
+.state.can-nguoi{background:var(--warn-soft);color:var(--warn)}
+.state.nguoi{background:var(--human);color:var(--human-ink)}
+.state.bot{background:var(--bot);color:var(--bot-ink)}
+.state.loi{background:var(--bad-soft);color:var(--bad)}
+.state.im{background:var(--panel2);color:var(--ink2)}
+.state small{display:block;font-weight:400;color:var(--ink2);margin-top:2px}
+.tt{display:flex;flex-direction:column;gap:7px}
+.tt .h{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink3);flex-wrap:wrap}
+.tt .h button{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:12px;padding:0}
+.tt .b{border:1px solid var(--line2);border-radius:9px;padding:6px 10px;background:var(--panel)}
+.tt .b h4{margin:0 0 4px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.tt .b p{margin:0;font-size:12.5px}
+.tt .b ul{margin:0;padding-left:16px;font-size:12.5px}
+.tt .b li{margin:1px 0}
+.tt .b.next{border-color:var(--accent);background:var(--accent-soft);border-left-width:4px}
+.tt .b.next h4{color:var(--accent)}
+.tt .b.miss{border-left:4px solid var(--warn)}
+.chip{display:inline-flex;align-items:center;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line2);color:var(--ink2);margin:2px 4px 0 0}
+.buoc{display:flex;gap:4px;margin-top:4px}
+.buoc span{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.buoc span.on{background:var(--accent)}
+.buoc span.now{background:var(--warn)}
+.buoc-l{display:flex;justify-content:space-between;font-size:10px;color:var(--ink3);margin-top:3px;gap:4px}
+.buoc-l span{flex:1;text-align:center}
+.stack{display:flex;flex-direction:column;gap:6px}
+.stack .ibtn{text-align:left}
+
+.dan{background:var(--panel2)}
+.dan .col-h{background:var(--panel)}
+.dan .col-h h2{color:var(--accent)}
+.dan-body{flex:1;min-height:0;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.me{align-self:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:12px;border-bottom-right-radius:4px;padding:6px 10px;max-width:92%;font-size:12.5px}
+.em{align-self:stretch;color:var(--ink);font-size:12.5px}
+.em .h{font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.em .act{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.em .ok{display:inline-flex;align-items:center;gap:6px;color:var(--good);font-weight:600}
+.em .ok::before{content:"✓"}
+.rule{display:flex;gap:8px;align-items:flex-start;background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 10px;font-size:12.5px}
+.rule.off{opacity:.55}
+.rule .no{font-size:11px;color:var(--ink3);flex:none;padding-top:2px}
+.rule .tx{flex:1;min-width:0}
+.rule .tx small{display:block;color:var(--ink3);font-size:11px;margin-top:2px}
+.rule .ac{display:flex;gap:4px;flex:none}
+.rule .ac button{border:0;background:transparent;color:var(--ink3);font-size:11px;padding:0 3px}
+.rule .ac button:hover{color:var(--ink)}
+.dan-in{border-top:1px solid var(--line);background:var(--panel);padding:8px 12px;flex:none}
+.dan-in textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel2);min-height:52px;max-height:110px}
+.dan-in .r{display:flex;align-items:center;gap:8px;margin-top:6px}
+.dan-in .hint{font-size:11.5px;color:var(--ink3)}
+
+/* chăm sóc lại */
+.cs-bar{display:flex;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap}
+.cs-bar .k{display:flex;align-items:baseline;gap:6px;padding-right:14px;border-right:1px solid var(--line2)}
+.cs-bar .k b{font-size:17px;font-weight:600}
+.cs-bar .k span{font-size:11.5px;color:var(--ink3)}
+.cs-bar .k b.warn{color:var(--warn)} .cs-bar .k b.good{color:var(--good)}
+.skip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--ink3)}
+.skip .pill{font-size:11.5px;padding:2px 8px}
+.tbl{flex:1;min-height:0;overflow:auto}
+.tr{display:grid;grid-template-columns:28px 180px 70px 150px 1fr 120px;gap:10px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line2);font-size:12.5px}
+.tr.th{position:sticky;top:0;background:var(--panel2);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);z-index:1}
+.tr .nm{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0}
+.tr .nm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr .nm .avatar{width:26px;height:26px;font-size:11px}
+.tr .nm small{display:block;font-weight:400;color:var(--ink3);font-size:11px}
+.tr .step{font-size:11px;padding:2px 7px;border-radius:5px;background:var(--panel2);border:1px solid var(--line2);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;justify-self:start;max-width:100%}
+.tr .step.s1{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.tr .step.s3{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.tr .step.s5{background:var(--good-soft);color:var(--good);border-color:transparent}
+.tr .cau{border:1px solid var(--line2);border-radius:7px;padding:5px 8px;background:var(--panel);min-width:0;color:var(--ink);white-space:normal;line-height:1.35}
+.tr .cau:focus{outline:2px solid var(--accent);outline-offset:0}
+.tr .cau.loi{color:var(--bad);border-color:var(--bad)}
+.tr .ago{color:var(--ink3)}
+.tr .ac{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
+.tr input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.tr.off{opacity:.45}
+.tr.sent{background:var(--good-soft)}
+.cs-foot{border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;gap:8px;flex:none;flex-wrap:wrap}
+.cs-foot .lim{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.cs-foot .lim input{width:52px;border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel2);text-align:center}
+.cmd{background:var(--ink);color:var(--panel);border-radius:9px;padding:9px 11px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;font-family:"IBM Plex Mono",ui-monospace,monospace;max-height:260px;overflow:auto;word-break:break-word}
+.path{border:1px solid var(--line2);border-radius:9px;padding:8px 10px;background:var(--panel)}
+.path h4{margin:0 0 3px;font-size:12px;font-weight:700}
+.path p{margin:0;font-size:12px;color:var(--ink2)}
+.path.ok{border-left:4px solid var(--good)} .path.wait{border-left:4px solid var(--warn)}
+.prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;flex:1;min-width:80px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:9px;font-size:12.5px;box-shadow:var(--shadow);z-index:9;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+@media (max-width:1100px){
+  html,body{height:auto}body{overflow:auto}.app{flex:none;min-height:0}
+  .cols{grid-template-columns:1fr!important}
+  .col{border-right:0;border-bottom:1px solid var(--line);overflow:visible;max-height:none}
+  .chat{min-height:320px;max-height:60vh}
+  .list{max-height:50vh}
+  .tr{grid-template-columns:28px 1fr 100px}.tr .step,.tr .ago{display:none}.tr .cau{grid-column:1/-1}.tr .ac{grid-column:1/-1;justify-content:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Visual polish. Preserve the existing layout and interactions. */
+:root {
+  --bg: #f3f6f8;
+  --panel: #ffffff;
+  --panel2: #f7f9fb;
+  --line: #dfe6eb;
+  --line2: #edf1f4;
+  --ink: #202c36;
+  --ink2: #526474;
+  --ink3: #697d8c;
+  --accent: #176e68;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8f4f0;
+  --bot: #e6f3ee;
+  --bot-ink: #235d51;
+  --human: #fff2dc;
+  --human-ink: #79561e;
+  --app: #f0ecfa;
+  --app-ink: #68528c;
+  --chat: #f4f7f9;
+  --good: #32775a;
+  --good-soft: #eaf5ed;
+  --warn: #956821;
+  --warn-soft: #fff3df;
+  --bad: #b84c49;
+  --bad-soft: #fceceb;
+  --shadow: 0 2px 5px rgb(30 50 65 / 2%), 0 12px 36px rgb(30 50 65 / 5%);
+  color-scheme: light;
+}
+body {
+  padding: 12px;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { -webkit-tap-highlight-color: transparent; }
+button, a, input, textarea { transition: background-color 150ms, border-color 150ms, box-shadow 150ms; }
+button:disabled { cursor: not-allowed; opacity: .46; }
+:focus-visible { outline: 3px solid #8bcac0; outline-offset: 3px; }
+::selection { background: #cae8df; color: #244b42; }
+* { scrollbar-width: thin; scrollbar-color: #c6d2db transparent; }
+.app { border-radius: 18px; border-color: var(--line); }
+.bar { min-height: 68px; padding: 12px 18px; gap: 14px; background: var(--panel); }
+.logo { font-size: 16px; font-weight: 650; gap: 10px; letter-spacing: -.45px; white-space: nowrap; }
+.logo i { width: 34px; height: 34px; border-radius: 11px; background: #295d50; flex: none; }
+.logo i::after {
+  content: "b"; inset: 0; display: grid; place-items: center;
+  color: #fff; background: transparent; font: italic 27px Georgia, serif;
+}
+.nav { gap: 3px; padding: 4px; border: 1px solid var(--line2); background: var(--panel2); border-radius: 12px; }
+.nav button { min-height: 36px; padding: 7px 14px; border-radius: 9px; font-size: 12px; }
+.nav button:hover { color: var(--accent); background: var(--accent-soft); }
+.nav button.on { color: var(--accent); background: var(--panel); box-shadow: 0 1px 4px rgb(25 50 65 / 8%); }
+.nav .n { top: -4px; right: -2px; font-size: 9px; box-shadow: 0 0 0 2px var(--panel); }
+.pill { font-size: 10.5px; font-weight: 550; padding: 5px 9px; gap: 5px; }
+.pill::before { width: 6px; height: 6px; }
+.pill.quiet { border-color: var(--line2); color: var(--ink2); }
+.bar .mono { font-family: inherit; font-variant-numeric: tabular-nums; }
+.switch { min-height: 38px; font-size: 12px; font-weight: 550; gap: 8px; }
+.switch i { width: 38px; height: 24px; border-radius: 20px; background: #b6c2cb; }
+.switch i::after { width: 18px; height: 18px; box-shadow: 0 1px 3px #0002; }
+.switch.on i::after { left: 17px; }
+.ibtn { min-height: 38px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 550; }
+a.ibtn { display: inline-flex; align-items: center; justify-content: center; }
+.ibtn.sm { min-height: 32px; padding: 5px 9px; font-size: 10.5px; }
+.ibtn:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); border-color: #b8d8cf; }
+.ibtn.pri { box-shadow: 0 2px 3px rgb(20 80 68 / 7%); }
+.ibtn.pri:hover:not(:disabled) { background: #125a55; border-color: #125a55; color: #fff; }
+.ibtn.bad:hover:not(:disabled) { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+.ibtn.warn:hover:not(:disabled) { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+.col-h { min-height: 58px; padding: 12px 14px; gap: 8px; }
+.col-h h2 { font-size: 12px; font-weight: 650; text-transform: none; letter-spacing: -.15px; color: var(--ink); }
+.search { min-height: 38px; padding: 8px 11px; border-radius: 10px; background: var(--panel2); }
+.search:focus-within { border-color: #90bfb2; box-shadow: 0 0 0 3px rgb(23 110 104 / 8%); }
+.search input { font-size: 12px; line-height: 1.6; }
+.search input::placeholder { color: var(--ink3); }
+.filters { padding: 10px 12px; gap: 5px; }
+.filters button { min-height: 30px; padding: 4px 9px; font-size: 10.5px; border-color: transparent; background: transparent; }
+.filters button:hover { background: var(--panel2); }
+.filters button.on { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
+.row { min-height: 76px; padding: 13px 12px; gap: 10px; border-bottom-color: var(--line2); grid-template-columns: auto minmax(0, 1fr) auto; }
+.row > * { min-width: 0; }
+.row .name { font-size: 12px; font-weight: 600; gap: 5px; }
+.row .last { margin-top: 5px; font-size: 11.5px; line-height: 1.5; }
+.row .t { font-size: 10px; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.row.sel { background: var(--accent-soft); border-left-color: var(--accent); }
+.avatar { width: 34px; height: 34px; font-size: 12px; font-weight: 600; }
+.tag { padding: 3px 6px; border-radius: 6px; font-size: 9px; line-height: 1.3; letter-spacing: 0; text-transform: none; font-weight: 550; }
+.empty { padding: 32px 18px; color: var(--ink3); font-size: 12px; line-height: 1.8; }
+.chat-h { min-height: 58px; padding: 12px 16px; gap: 10px; }
+.chat-h .n { font-size: 13px; font-weight: 600; }
+.chat-h .sub { font-size: 11px; }
+.chat { padding: 18px 16px; gap: 11px; }
+.day { padding: 4px 11px; font-size: 10px; border: 1px solid var(--line2); margin: 7px 0; }
+.msg { padding: 10px 13px; border-radius: 15px; line-height: 1.65; font-size: 12.5px; box-shadow: 0 1px 2px rgb(25 50 65 / 4%); }
+.msg .who { font-size: 10px; text-transform: none; letter-spacing: 0; font-weight: 600; margin-bottom: 4px; }
+.msg .t { font-size: 9px; margin-top: 5px; opacity: .85; }
+.msg.khach { border: 1px solid var(--line2); }
+.sys { padding: 6px 10px; font-size: 10.5px; border-style: solid; border-radius: 9px; }
+.compose { padding: 12px 14px; gap: 9px; background: var(--panel); }
+.compose .box { gap: 9px; }
+.compose textarea { padding: 10px 12px; min-height: 54px; border-radius: 11px; background: var(--panel2); line-height: 1.55; font-size: 12px; }
+.compose textarea:focus, .dan-in textarea:focus { border-color: #90bfb2; background: var(--panel); }
+.info { padding: 14px; gap: 13px; }
+.state { display: block; padding: 10px 12px; border-radius: 11px; font-size: 11.5px; }
+.state small { margin-top: 4px; line-height: 1.65; }
+.tt { gap: 10px; }
+.tt .h { font-size: 10px; }
+.tt .b { padding: 10px 12px; border-radius: 11px; border-color: var(--line); }
+.tt .b h4 { font-size: 10.5px; text-transform: none; letter-spacing: 0; font-weight: 600; margin-bottom: 6px; }
+.tt .b p, .tt .b ul { font-size: 12px; line-height: 1.7; }
+.tt .b.next { border-color: #b8d8cf; border-left: 3px solid var(--accent); }
+.tt .b.miss { border-left-width: 3px; }
+.chip { font-size: 10px; padding: 4px 8px; }
+.buoc { gap: 5px; margin-top: 8px; }
+.buoc span { height: 5px; }
+.buoc-l { font-size: 9px; margin-top: 5px; }
+.stack { gap: 8px; }
+.dan { background: var(--panel2); }
+.dan-body { padding: 14px; gap: 12px; }
+.me { padding: 10px 12px; border-radius: 13px 13px 4px 13px; font-size: 12px; line-height: 1.65; }
+.em { font-size: 12px; line-height: 1.7; }
+.em .h { font-size: 10.5px; font-weight: 550; letter-spacing: 0; text-transform: none; margin-bottom: 6px; }
+.rule { padding: 10px 11px; border-radius: 11px; font-size: 12px; }
+.rule .tx small { font-size: 10px; margin-top: 5px; }
+.rule .ac button { min-width: 24px; min-height: 26px; border-radius: 6px; }
+.rule .ac button:hover { color: var(--accent); background: var(--accent-soft); }
+.dan-in { padding: 12px 14px; border-top-color: var(--line); }
+.dan-in textarea { min-height: 70px; padding: 10px 12px; border-radius: 11px; font-size: 12px; line-height: 1.6; }
+.dan-in .r { margin-top: 9px; }
+.dan-in .hint { font-size: 10px; line-height: 1.65; }
+.cs-bar { min-height: 86px; padding: 14px 18px; gap: 15px; background: var(--panel); }
+.cs-bar .k { gap: 8px; padding: 7px 16px 7px 0; }
+.cs-bar .k b { font-family: inherit; font-size: 24px; letter-spacing: -.7px; font-weight: 600; }
+.cs-bar .k span { font-size: 11px; max-width: 100px; line-height: 1.6; }
+.skip, .skip .pill { font-size: 10px; }
+.tr { padding: 11px 14px; gap: 10px; line-height: 1.6; }
+.tr.th { min-height: 46px; font-size: 10px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.tr .cau { border-radius: 9px; padding: 9px 11px; line-height: 1.65; }
+.tr .step { padding: 4px 7px; font-size: 10px; border-radius: 6px; }
+.tr .nm { font-size: 12px; }
+.tr .nm small { font-size: 10px; }
+.tr .ago { font-size: 11px; }
+.tr input[type=checkbox] { width: 18px; height: 18px; }
+.cs-foot { padding: 12px 14px; gap: 10px; }
+.cs-foot .lim { font-size: 11px; }
+.cs-foot .lim input { min-height: 34px; padding: 5px; border-radius: 8px; }
+.path { padding: 12px; border-radius: 12px; }
+.path.ok, .path.wait { border-left-width: 3px; }
+.path h4 { font-size: 11.5px; font-weight: 600; margin-bottom: 6px; }
+.path p { font-size: 11px; line-height: 1.75; }
+.cmd { border-radius: 11px; padding: 13px; font-size: 11px; line-height: 1.7; }
+.loi-box { padding: 10px 12px; border-radius: 10px; font-size: 12px; }
+.toast { bottom: 22px; max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 12px; font-size: 12px; }
+@media (max-width: 1100px) {
+  .bar { gap: 12px; padding: 13px 16px; }
+  .cols { overflow: visible; }
+  .col { flex: none; }
+  .list { min-height: 110px; }
+  .info, .dan-body { overflow: visible; }
+}
+@media (max-width: 600px) {
+  body { padding: 0; }
+  .app { border: 0; border-radius: 0; }
+  .bar { gap: 10px; }
+  .logo { font-size: 14px; }
+  .nav button { padding: 7px 10px; font-size: 11px; }
+  .bar .pill { font-size: 9px; }
+  .bar .sp { display: none; }
+  .chat { padding: 16px 13px; }
+  .msg { max-width: 88%; }
+  .cs-bar { padding: 12px 14px; gap: 10px; }
+  .cs-bar .k { padding-right: 10px; }
+  .cs-bar .k b { font-size: 21px; }
+  .cs-foot .lim { flex-wrap: wrap; }
+  .dan-in .r { flex-wrap: wrap; }
+  .dan-in .hint { flex: 1; min-width: 160px; }
+}
+@media (pointer: coarse) {
+  .ibtn, .ibtn.sm, .nav button, .filters button, .switch { min-height: 44px; }
+  .rule .ac button { min-width: 36px; min-height: 36px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171e24; --panel: #202a32; --panel2: #252f38;
+    --line: #384650; --line2: #303b45;
+    --ink: #edf2f5; --ink2: #becbd4; --ink3: #9bafbd;
+    --accent: #91cdbb; --accent-ink: #143c32; --accent-soft: #2b433e;
+    --bot: #2b433e; --bot-ink: #d0ecdf;
+    --human: #443a28; --human-ink: #efdab0;
+    --app: #3a344b; --app-ink: #e0d5f6;
+    --chat: #1b242c; --khach: #2a3540;
+    --good: #9dccac; --good-soft: #2b4034;
+    --warn: #e1bd7e; --warn-soft: #443a28;
+    --bad: #efa6a0; --bad-soft: #472f32;
+    --shadow: 0 12px 36px rgb(0 0 0 / 14%);
+    color-scheme: dark;
+  }
+  * { scrollbar-color: #4a5b66 transparent; }
+  .ibtn.pri:hover:not(:disabled) { background: #aedccb; border-color: #aedccb; color: #143c32; }
+  .ibtn:hover:not(:disabled), .tt .b.next { border-color: #527b6d; }
+  .search:focus-within { box-shadow: 0 0 0 3px rgb(145 205 187 / 10%); }
+  ::selection { background: #496e60; color: #fff; }
+}
+
+/* Phone workspace: one panel at a time; desktop columns remain unchanged. */
+.phone-nav { display: none; }
+@media (max-width: 760px) {
+  html, body { height: 100%; overflow: hidden; }
+  body { padding: 0; overscroll-behavior: none; }
+  .app { width: 100%; height: var(--phone-height, 100dvh); min-height: 0; flex: none; border: 0; border-radius: 0; overflow: hidden; padding-top: env(safe-area-inset-top); }
+  .bar { padding: 8px 12px; gap: 8px; min-height: 0; flex: none; }
+  .logo { margin-right: auto; font-size: 13px; gap: 8px; }
+  .logo i { width: 30px; height: 30px; border-radius: 10px; }
+  .logo i::after { font-size: 24px; }
+  .bar > .sp, #p-webhook, #p-quet { display: none; }
+  .bar .switch { font-size: 10px; gap: 6px; min-height: 44px; }
+  .bar > a.ibtn { padding: 7px 10px; min-height: 44px; font-size: 11px; }
+  .bar .nav { order: 5; width: 100%; margin: 0; flex: none; padding: 3px; }
+  .bar .nav button { flex: 1; min-height: 40px; font-size: 12px; }
+  .phone-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); flex: none; padding: 5px 8px; gap: 4px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .phone-nav button { min-height: 44px; padding: 6px 3px; border: 0; border-radius: 9px; background: transparent; color: var(--ink2); font-size: 11px; font-weight: 500; }
+  .phone-nav button[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .phone-nav button:disabled { opacity: .4; }
+  #phone-care-nav { grid-template-columns: 1fr 1fr; }
+  .app[data-screen="ban-truc"] #phone-care-nav,
+  .app[data-screen="cham-soc"] #phone-chat-nav { display: none; }
+  #man-ban-truc, #man-cham-soc > .cols { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+  #man-ban-truc > .col, #man-cham-soc > .cols > .col { display: none; width: 100%; flex: 1; min-width: 0; min-height: 0; max-height: none; overflow: hidden; border: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .app[data-phone-panel="customers"] #man-ban-truc > .col:nth-child(1),
+  .app[data-phone-panel="chat"] #man-ban-truc > .col:nth-child(2),
+  .app[data-phone-panel="info"] #man-ban-truc > .col:nth-child(3),
+  .app[data-phone-panel="instructions"] #man-ban-truc > .col:nth-child(4),
+  .app[data-care-panel="list"] #man-cham-soc > .cols > .col:nth-child(1),
+  .app[data-care-panel="send"] #man-cham-soc > .cols > .col:nth-child(2) { display: flex; }
+  .col-h { flex: none; padding: 10px 12px; min-height: 54px; }
+  .col-h h2 { font-size: 13px; }
+  .search { min-height: 44px; }
+  .search input, input, textarea, [contenteditable="true"] { font-size: 16px; }
+  .filters { gap: 3px; padding: 5px 8px; flex-wrap: nowrap; overflow-x: auto; flex: none; }
+  .filters button { min-height: 44px; font-size: 10px; padding: 6px 8px; white-space: nowrap; flex-shrink: 0; }
+  .list, .chat, .info, .dan-body, .tbl { flex: 1; min-height: 0; max-height: none; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .list { min-height: 0; }
+  .row { min-height: 83px; padding: 14px 12px; }
+  .row .name { font-size: 13px; }
+  .row .last { font-size: 12px; }
+  .row .t { font-size: 10px; }
+  .chat-h { flex: none; gap: 8px; padding: 10px 12px; min-height: 64px; }
+  .chat-h > div { flex: 1; min-width: 0; }
+  .chat-h .n { font-size: 13px; overflow-wrap: anywhere; }
+  .chat-h .sub { font-size: 10px; overflow-wrap: anywhere; }
+  .chat-h .sp { display: none; }
+  .chat-h button { flex: none; }
+  .chat { padding: 14px 12px; gap: 12px; }
+  .msg { max-width: 89%; font-size: 14px; padding: 11px 13px; }
+  .compose { flex: none; padding: 9px 10px; gap: 6px; }
+  .compose .box { align-items: flex-end; gap: 8px; }
+  .compose textarea { flex: 1; min-width: 0; height: 58px; min-height: 58px; max-height: 100px; padding: 10px 12px; font-size: 16px; resize: none; }
+  .compose #btn-gui { min-width: 54px; min-height: 50px; }
+  .dan-in { flex: none; padding: 10px 12px; }
+  .dan-in textarea { min-height: 65px; height: 72px; max-height: 110px; font-size: 16px; resize: none; }
+  .dan-in .r { flex-wrap: nowrap; margin-top: 7px; }
+  .dan-in .hint { min-width: 0; flex: 1; font-size: 10px; }
+  .dan-in .sp { display: none; }
+  .info { padding: 14px; }
+  .tt .b p, .tt .b ul, .em, .rule { font-size: 13px; }
+  #man-cham-soc { overflow: hidden; }
+  .cs-bar { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 10px 12px; min-height: 0; }
+  .cs-bar .k { min-width: 0; padding: 0 5px 0 0; border: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+  .cs-bar .k b { font-size: 19px; white-space: nowrap; }
+  .cs-bar .k span { max-width: 100%; font-size: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+  .cs-bar > .sp { display: none; }
+  .cs-bar .skip { grid-column: 1 / -1; max-height: 32px; overflow-y: auto; font-size: 9px; }
+  .app[data-care-panel="send"] .cs-bar { display: none; }
+  .tbl { padding: 10px 12px; background: var(--panel2); }
+  .tr.th { display: none; }
+  .tr:not(.th) { grid-template-columns: 26px minmax(0, 1fr); gap: 9px; padding: 13px; margin-bottom: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 13px; }
+  .tr .nm { min-width: 0; font-size: 13px; }
+  .tr .nm span { white-space: normal; overflow-wrap: anywhere; }
+  .tr .ago, .tr .step { display: block; grid-column: 2; white-space: normal; font-size: 11px; }
+  .tr .ago::before { content: "Chưa phản hồi: "; font-family: inherit; }
+  .tr .cau { grid-column: 1 / -1; padding: 11px; font-size: 16px; overflow-wrap: anywhere; min-height: 70px; }
+  .tr .ac { grid-column: 1 / -1; justify-content: flex-end; gap: 7px; }
+  .tr input[type="checkbox"] { width: 22px; height: 22px; }
+  .cs-foot { flex: none; display: flex; gap: 7px; padding: 9px 12px; }
+  .cs-foot > .sp { display: none; }
+  #cs-chon { font-size: 11px; flex: 1; }
+  .cs-foot .lim { width: 100%; font-size: 10px; gap: 5px; flex-wrap: wrap; }
+  .cs-foot .lim input { width: 43px; min-height: 36px; font-size: 16px; }
+  #btn-lap, #btn-duyet { flex: 1; min-height: 44px; font-size: 11px; padding: 8px; }
+  .ibtn, .ibtn.sm { min-height: 44px; }
+  .toast { bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 50; max-width: calc(100% - 24px); }
+  .cmd { max-height: none; }
+}
+@media (max-width: 760px) and (max-height: 520px) {
+  .app.keyboard-open .bar { display: none; }
+  .app.keyboard-open .phone-nav { padding-top: 2px; padding-bottom: 2px; }
+  .app.keyboard-open .phone-nav button { min-height: 36px; }
+  .app.keyboard-open .chat-h { min-height: 42px; padding: 4px 10px; }
+  .app.keyboard-open .chat-h .sub { display: none; }
+}
+
+</style>
+</head>
+<body>
+<div class="app" data-screen="ban-truc" data-phone-panel="customers" data-care-panel="list">
+  <div class="bar">
+    <div class="logo"><i></i>Bàn trực · Bot</div>
+    <nav class="nav">
+      <button class="on" data-man="ban-truc" id="nav-ban-truc">Hội thoại <span class="n" id="n-can-nguoi"></span></button>
+      <button data-man="cham-soc" id="nav-cham-soc">Chăm sóc lại <span class="n" id="n-cham"></span></button>
+    </nav>
+    <span class="sp"></span>
+    <span class="pill quiet mono" id="p-webhook" title="Lần cuối Facebook đẩy tin tới">webhook —</span>
+    <span class="pill quiet mono" id="p-quet" title="Lần cuối worker tự đọc hộp thư">quét —</span>
+    <button class="switch" id="sw-bot" title="Bật/tắt bot toàn cục"><i></i><span>Bot …</span></button>
+    <a class="ibtn sm" href="/quan-ly/thoat" title="Xoá cookie đăng nhập trên máy này">Thoát</a>
+  </div>
+
+<div class="phone-nav" id="phone-chat-nav" role="group" aria-label="Khu vực hội thoại">
+<button type="button" data-phone-target="customers" aria-pressed="true">Khách</button>
+<button type="button" data-phone-target="chat" aria-pressed="false" disabled>Chat</button>
+<button type="button" data-phone-target="info" aria-pressed="false" disabled>Tóm tắt</button>
+<button type="button" data-phone-target="instructions" aria-pressed="false">Dặn trợ lý</button>
+</div><div class="phone-nav" id="phone-care-nav" role="group" aria-label="Khu vực chăm sóc lại">
+<button type="button" data-care-target="list" aria-pressed="true">Danh sách khách</button>
+<button type="button" data-care-target="send" aria-pressed="false">Gửi &amp; thiết lập</button>
+</div>
+  <!-- ===== MÀN 1: BÀN TRỰC ===== -->
+  <div class="cols" id="man-ban-truc" style="grid-template-columns:290px 1fr 300px 330px">
+    <div class="col">
+      <div class="col-h"><div class="search">🔍 <input aria-label="Tìm khách hàng" id="tim" placeholder="Tìm tên khách hoặc câu chữ"></div></div>
+      <div class="filters" id="loc">
+        <button class="on" data-loc="">Tất cả</button><button data-loc="can-nguoi">Cần người</button><button data-loc="nguoi">Chủ trực</button><button data-loc="bot">Bot</button><button data-loc="loi">Lỗi</button>
+      </div>
+      <div class="list" id="ds-hoi-thoai"><div class="empty">Đang tải…</div></div>
+    </div>
+
+    <div class="col">
+      <div class="chat-h" id="chat-h"><div class="sub">Chọn một khách ở cột trái.</div></div>
+      <div class="chat" id="chat"></div>
+      <div class="compose" id="compose">
+        <div class="loi-box" id="gui-loi"></div>
+        <div class="box"><textarea aria-label="Tin nhắn trả lời khách" id="tra-loi" placeholder="Trả lời tay với tư cách Page (Ctrl+Enter để gửi). Gửi xong bot im 6 giờ với khách này." disabled></textarea><button class="ibtn pri" id="btn-gui" disabled>Gửi</button></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="col-h"><h2>Thông tin · tóm tắt</h2><span class="sp"></span><button class="ibtn sm" id="btn-tom-tat" disabled>Tóm tắt lại</button></div>
+      <div class="info" id="info"><div class="empty">Chưa chọn khách.</div></div>
+    </div>
+
+    <div class="col dan">
+      <div class="col-h"><h2>Dặn thêm cho em</h2><span class="sp"></span><span class="pill quiet mono" id="p-so-luat">— luật</span></div>
+      <div class="dan-body" id="dan-body"><div class="empty">Đang tải…</div></div>
+      <div class="dan-in">
+        <textarea id="dan-text" placeholder="Gõ điều bạn muốn bot làm khác đi. Ví dụ: khách hỏi giá thì hỏi số lượng trước rồi mới báo."></textarea>
+        <div class="r"><span class="hint">Em nhắc lại cách hiểu, bạn bấm Áp dụng thì bot đổi ngay, không cần deploy.</span><span class="sp"></span><button class="ibtn pri" id="btn-dan">Dặn em</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MÀN 2: CHĂM SÓC LẠI ===== -->
+  <div class="hidden" id="man-cham-soc" style="display:flex;flex-direction:column;flex:1;min-height:0">
+    <div class="cs-bar" id="cs-bar">
+      <div class="k"><b class="warn mono" id="k-can">—</b><span>cần chăm hôm nay</span></div>
+      <div class="k"><b class="mono" id="k-boqua">—</b><span>bỏ qua</span></div>
+      <div class="k"><b class="good mono" id="k-truoc">—</b><span id="k-truoc-l">đợt trước: gửi → rép</span></div>
+      <div class="k"><b class="mono" id="k-nhip">—</b><span>nhịp chăm</span></div>
+      <span class="sp"></span>
+      <div class="skip" id="skip">Bỏ qua: <span class="pill quiet">chưa có số</span></div>
+    </div>
+    <div class="cols" style="grid-template-columns:1fr 360px">
+      <div class="col">
+        <div class="tbl" id="tbl">
+          <div class="tr th"><span></span><span>Khách</span><span>Im từ</span><span>Đang kẹt ở</span><span>Câu chăm sóc (AI soạn, bấm vào để sửa)</span><span></span></div>
+          <div class="empty" id="tbl-empty">Chưa có đợt nào. Bấm "Lập danh sách ngay" hoặc chờ 06:00 sáng.</div>
+        </div>
+        <div class="cs-foot">
+          <span class="mono" style="color:var(--ink2)" id="cs-chon">0 / 0 được chọn</span>
+          <div class="prog hidden" id="cs-prog"><i></i></div>
+          <span class="mono hidden" id="cs-prog-t" style="color:var(--ink3);font-size:11.5px"></span>
+          <span class="sp"></span>
+          <div class="lim">im từ <input id="cs-nhip" value="3" inputmode="numeric"> ngày · tối đa <input id="cs-lim" value="30" inputmode="numeric"> khách</div>
+          <button class="ibtn" id="btn-lap">Lập danh sách ngay</button>
+          <button class="ibtn pri" id="btn-duyet" disabled>Duyệt đợt này</button>
+        </div>
+      </div>
+      <div class="col dan">
+        <div class="col-h"><h2 id="cs-tieu-de">Gửi đợt</h2><span class="sp"></span><span class="pill warn" id="cs-trang-thai">chưa có đợt</span></div>
+        <div class="dan-body" id="cs-phai">
+          <div class="path ok"><h4>Đường 1 · Claude extension trong Chrome</h4><p>Bấm Duyệt, chép lệnh, dán vào cột Claude trong Chrome. Nó mở hộp thư Trang và gửi từng người. Gửi xong quay lại đây bấm "Đã gửi" (worker cũng tự nhận khi quét hộp thư thấy đúng câu).</p></div>
+          <div id="cs-lenh-box" class="hidden">
+            <div class="cmd" id="cs-lenh"></div>
+            <div class="em act" style="display:flex;gap:6px;margin-top:6px"><button class="ibtn pri" id="btn-chep">Chép lệnh</button><button class="ibtn" id="btn-da-gui-het">Đã gửi hết đợt</button></div>
+          </div>
+          <div class="path wait"><h4>Đường 2 · Gửi thẳng qua API (thẻ Human Agent)</h4><p id="cs-api-p">Cần Facebook duyệt quyền Human Agent cho app của bạn. Chưa có thì nút "API" ở từng dòng sẽ báo lỗi.</p></div>
+          <div class="em" id="cs-dot-truoc"></div>
+          <div class="em"><div class="h">Đang áp dụng</div><div id="cs-luat-tom">Nhịp — ngày · tối đa — khách/đợt · AI tự xếp nhóm bỏ qua: từ chối, đã xong, không phải khách.</div></div>
+        </div>
+        <div class="dan-in">
+          <textarea id="cs-dan-text" placeholder="Dặn em về cách chăm sóc. Ví dụ: khách đã báo giá quá 2 lần thì thôi, không chăm nữa."></textarea>
+          <div class="r"><span class="hint">Luật chăm sóc cũng vào sổ luật chung của bot.</span><span class="sp"></span><button class="ibtn pri" id="btn-cs-dan">Dặn em</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const BUOC = { 0: "chưa rõ", 1: "hỏi nhu cầu", 2: "đã báo giá / tư vấn", 3: "khách đồng ý, đang chốt", 4: "đang thực hiện / giao", 5: "đã xong" };
+const BUOC_NGAN = ["Nhu cầu", "Báo giá", "Đồng ý", "Thực hiện", "Xong"];
+const TT_NHAN = { bot: "bot", "can-nguoi": "cần người", nguoi: "chủ trực", im: "im ngắn", loi: "lỗi AI" };
+const AI_TEN = { khach: "", bot: "Bot", nao: "Bot", nguoi: "Chủ · tay", pmk: "Phần mềm khác", cham: "Tin chăm sóc" };
+const NHOM_TEN = { "tu-choi": "từ chối", "da-xong": "đã xong", "khong-phai-khach": "không phải khách", khac: "khác", "chu-gan": "bạn gắn tay" };
+
+let toastT;
+function toast(msg, xau) { const t = $("#toast"); t.textContent = msg; t.style.background = xau ? "var(--bad)" : "var(--ink)"; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
+
+async function api(path, body, method) {
+  const r = await fetch(path, { method: method || (body ? "POST" : "GET"), headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined, credentials: "same-origin" });
+  if (r.status === 401) { location.reload(); throw new Error("hết phiên đăng nhập"); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok && !d.loi) d.loi = "HTTP " + r.status;
+  return d;
+}
+
+// ---- thời gian ----
+const ms = t => typeof t === "number" ? t : Date.parse(t || 0);
+function gioNgan(t) { const d = new Date(ms(t)); if (!ms(t)) return ""; const nay = new Date(); const cung = d.toDateString() === nay.toDateString(); return cung ? d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }); }
+function cachDay(t) { const s = (Date.now() - ms(t)) / 1000; if (!ms(t)) return "—"; if (s < 60) return "vừa xong"; if (s < 3600) return Math.round(s / 60) + " phút"; if (s < 86400) return Math.round(s / 3600) + " giờ"; return Math.round(s / 86400) + " ngày"; }
+function ngayDay(t) { return new Date(ms(t)).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); }
+function avatar(ten, psid) { const a = el("span", "avatar"); const s = (ten || "?").trim(); a.textContent = s.split(/\s+/).slice(-1)[0].slice(0, 1).toUpperCase(); const h = [...String(psid || ten)].reduce((x, c) => (x * 31 + c.charCodeAt(0)) >>> 0, 7); a.style.background = `hsl(${h % 360} 38% 46%)`; return a; }
+
+// Mobile navigation switches existing panels, without duplicating forms or data.
+const phoneApp = document.querySelector('.app');
+const phoneMedia = matchMedia('(max-width: 760px)');
+function phonePanel(name) {
+  phoneApp.dataset.phonePanel = name;
+  document.querySelectorAll('[data-phone-target]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.phoneTarget === name)));
+  if (name === 'chat' && phoneMedia.matches) requestAnimationFrame(() => { const chat = document.querySelector('#chat'); chat.scrollTop = chat.scrollHeight; });
+}
+document.querySelectorAll('[data-phone-target]').forEach(button => button.addEventListener('click', () => phonePanel(button.dataset.phoneTarget)));
+document.querySelectorAll('[data-care-target]').forEach(button => button.addEventListener('click', () => {
+  phoneApp.dataset.carePanel = button.dataset.careTarget;
+  document.querySelectorAll('[data-care-target]').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+}));
+const desktopReplyPlaceholder = document.querySelector('#tra-loi').placeholder;
+function syncPhoneViewport() {
+  const viewport = window.visualViewport;
+  if (phoneMedia.matches && (!viewport || viewport.scale === 1)) {
+    phoneApp.style.setProperty('--phone-height', (viewport ? viewport.height : innerHeight) + 'px');
+    const editing = document.activeElement?.matches('input, textarea, [contenteditable="true"]');
+    phoneApp.classList.toggle('keyboard-open', Boolean(editing && (viewport ? viewport.height : innerHeight) < 520));
+    if (document.activeElement?.id === 'tra-loi') requestAnimationFrame(() => { const chat = document.querySelector('#chat'); chat.scrollTop = chat.scrollHeight; });
+  } else {
+    phoneApp.style.removeProperty('--phone-height'); phoneApp.classList.remove('keyboard-open');
+  }
+  document.querySelector('#tra-loi').placeholder = phoneMedia.matches ? 'Nhắn với tư cách Page…' : desktopReplyPlaceholder;
+}
+window.visualViewport?.addEventListener('resize', syncPhoneViewport);
+window.addEventListener('resize', syncPhoneViewport);
+document.addEventListener('focusin', syncPhoneViewport);
+document.addEventListener('focusout', () => requestAnimationFrame(syncPhoneViewport));
+syncPhoneViewport();
+
+// ================= TRẠNG THÁI CHUNG =================
+let trangThai = {};
+async function taiTrangThai() {
+  trangThai = await api("/admin");
+  const bat = trangThai.bot === "bat";
+  const sw = $("#sw-bot"); sw.classList.toggle("on", bat); sw.querySelector("span").textContent = bat ? "Bot đang bật" : "Bot đang TẮT";
+  $("#p-webhook").textContent = "webhook " + (trangThai.webhookLanCuoi && trangThai.webhookLanCuoi.includes("T") ? cachDay(trangThai.webhookLanCuoi) + " trước" : "chưa có");
+  $("#p-quet").textContent = "quét " + (trangThai.quetLanCuoi && trangThai.quetLanCuoi.includes("T") ? cachDay(trangThai.quetLanCuoi) + " trước" : "chưa");
+}
+$("#sw-bot").addEventListener("click", async () => {
+  const bat = trangThai.bot === "bat";
+  if (bat && !confirm("Tắt bot toàn cục? Mọi khách nhắn tới sẽ không được trả lời cho tới khi bật lại.")) return;
+  await api("/admin/bot?trang_thai=" + (bat ? "tat" : "bat"), {}, "POST");
+  await taiTrangThai(); toast(bat ? "Đã tắt bot" : "Đã bật bot");
+});
+
+// ================= MÀN =================
+document.querySelectorAll(".nav button").forEach(b => b.addEventListener("click", () => doiMan(b.dataset.man)));
+function doiMan(m) {
+  phoneApp.dataset.screen = m;
+  document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("on", b.dataset.man === m));
+  $("#man-ban-truc").classList.toggle("hidden", m !== "ban-truc");
+  $("#man-cham-soc").classList.toggle("hidden", m !== "cham-soc");
+  try { localStorage.setItem("man", m); } catch (e) {}
+  if (m === "cham-soc") taiChamSoc();
+}
+
+// ================= DANH SÁCH HỘI THOẠI =================
+let dsKhach = [], locHienTai = "", psidChon = null, timT;
+$("#tim").addEventListener("input", () => { clearTimeout(timT); timT = setTimeout(taiHoiThoai, 300); });
+$("#loc").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; locHienTai = b.dataset.loc; document.querySelectorAll("#loc button").forEach(x => x.classList.toggle("on", x === b)); veHoiThoai(); });
+
+async function taiHoiThoai() {
+  const q = $("#tim").value.trim();
+  const d = await api("/admin/hoi-thoai?so=120" + (q ? "&q=" + encodeURIComponent(q) : ""));
+  if (d.loi) { $("#ds-hoi-thoai").innerHTML = `<div class="empty">${esc(d.loi)}</div>`; return; }
+  dsKhach = d.khach || [];
+  const soCan = dsKhach.filter(k => k.trangThai === "can-nguoi").length;
+  $("#n-can-nguoi").textContent = soCan || "";
+  veHoiThoai();
+}
+function veHoiThoai() {
+  const box = $("#ds-hoi-thoai"); box.innerHTML = "";
+  const ds = locHienTai ? dsKhach.filter(k => k.trangThai === locHienTai) : dsKhach;
+  if (!ds.length) { box.appendChild(el("div", "empty", dsKhach.length ? "Không có khách nào ở nhóm này." : "Chưa có hội thoại nào trong 90 ngày.")); return; }
+  for (const k of ds) {
+    const r = el("button", "row" + (k.psid === psidChon ? " sel" : ""));
+    r.appendChild(avatar(k.ten, k.psid));
+    const mid = el("span");
+    mid.appendChild(el("span", "name", `${esc(k.ten || k.psid)} <span class="tag ${k.trangThai}">${TT_NHAN[k.trangThai] || k.trangThai}</span>`));
+    mid.appendChild(el("span", "last" + (k.ai === "khach" ? " kh" : ""), esc(k.cuoi || "")));
+    r.appendChild(mid);
+    r.appendChild(el("span", "t mono", gioNgan(k.t)));
+    r.addEventListener("click", () => chonKhach(k.psid));
+    box.appendChild(r);
+  }
+}
+
+// ================= MỘT KHÁCH =================
+let khach = null;
+async function chonKhach(psid, giuCuon) {
+  psidChon = psid; veHoiThoai();
+  const d = await api("/admin/khach-day-du?psid=" + encodeURIComponent(psid));
+  if (d.loi) { toast(d.loi, true); return; }
+  khach = d;
+  document.querySelectorAll('[data-phone-target="chat"], [data-phone-target="info"]').forEach(button => { button.disabled = false; });
+  if (phoneMedia.matches && !giuCuon) phonePanel('chat');
+  veChat(giuCuon); veInfo();
+  $("#tra-loi").disabled = false; $("#btn-gui").disabled = false; $("#btn-tom-tat").disabled = false;
+  if (!d.tomTat || d.tomTatCu) tomTatLai(true);
+}
+function trangThaiKhach() {
+  if (!khach) return "bot";
+  if (khach.nguoiTruc) return "nguoi";
+  if (khach.imNgan) return "im";
+  const k = dsKhach.find(x => x.psid === khach.psid);
+  return k ? k.trangThai : "bot";
+}
+function veChat(giuCuon) {
+  const h = $("#chat-h"); h.innerHTML = "";
+  h.appendChild(avatar(khach.ten, khach.psid));
+  const tt = trangThaiKhach();
+  const sub = khach.nguoiTruc ? `bot im tới ${ngayDay(khach.nguoiTruc.toi)} vì chủ đã trả lời tay` : khach.imNgan ? "bot đang im ngắn chờ người" : khach.boQua ? "đã gắn: không chăm nữa" : "bot đang trực";
+  h.appendChild(el("div", "", `<div class="n">${esc(khach.ten || khach.psid)}</div><div class="sub">PSID <span class="mono">${esc(khach.psid)}</span> · ${sub}</div>`));
+  h.appendChild(el("span", "sp"));
+  if (tt === "nguoi" || tt === "im") { const b = el("button", "ibtn sm", "Mở lại bot"); b.title = "Xoá dấu người trực, bot trả lời tiếp khách này"; b.onclick = moLaiBot; h.appendChild(b); }
+  else { const b = el("button", "ibtn sm warn", "Bot im hẳn"); b.title = "Bot im 6 giờ với khách này, như chủ vừa gõ tay"; b.onclick = botIm; h.appendChild(b); }
+
+  const c = $("#chat"); const cuonDuoi = !giuCuon || c.scrollTop + c.clientHeight >= c.scrollHeight - 40;
+  c.innerHTML = "";
+  let ngayTruoc = "";
+  const ls = khach.lichSu || [];
+  if (!ls.length) c.appendChild(el("div", "sys", "Chưa có tin nào trong kho."));
+  for (const m of ls) {
+    const ng = m.t ? new Date(ms(m.t)).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+    if (ng && ng !== ngayTruoc) { c.appendChild(el("span", "day", ng === new Date().toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }) ? "Hôm nay" : ng)); ngayTruoc = ng; }
+    const ai = m.role === "user" ? "khach" : m.nguoi ? "nguoi" : m.cham ? "cham" : m.app ? "pmk" : m.nao ? "nao" : "bot";
+    const b = el("div", "msg " + ai);
+    if (AI_TEN[ai]) b.appendChild(el("div", "who", AI_TEN[ai]));
+    b.appendChild(document.createTextNode(m.content || ""));
+    b.appendChild(el("div", "t mono", gioNgan(m.t)));
+    c.appendChild(b);
+  }
+  if (khach.cham) c.appendChild(el("div", "sys", `Đã chăm sóc lại ${ngayDay(khach.cham.luc)} qua ${esc(khach.cham.cach || "")}${khach.cham.rep ? " · khách đã rép" : ""}`));
+  if (cuonDuoi) c.scrollTop = c.scrollHeight;
+  $("#gui-loi").textContent = "";
+}
+function veInfo() {
+  const box = $("#info"); box.innerHTML = "";
+  const tt = trangThaiKhach();
+  const k = dsKhach.find(x => x.psid === khach.psid) || {};
+  const stateText = { "can-nguoi": `⚠ Khách cần người<small>${esc(k.lyDo || "bot đã ghi sổ chuyển người")}</small>`, nguoi: `Chủ đang trực<small>bot im tới ${khach.nguoiTruc ? ngayDay(khach.nguoiTruc.toi) : ""}</small>`, im: "Bot im ngắn<small>chờ người vào, hết giờ bot nói tiếp</small>", loi: "Có lỗi AI gần đây<small>xem sổ lỗi ở /admin</small>", bot: "Bot đang trực<small>khách nhắn là bot trả lời</small>" };
+  box.appendChild(el("div", "state " + tt, stateText[tt] || stateText.bot));
+
+  const t = khach.tomTat;
+  const wrap = el("div", "tt");
+  if (!t) wrap.appendChild(el("div", "h", `<span id="tt-dang">Chưa có tóm tắt.</span>`));
+  else {
+    wrap.appendChild(el("div", "h", `AI đọc ${t.soTin} tin · ${cachDay(t.luc)} trước${khach.tomTatCu ? ' · <span style="color:var(--warn)">có tin mới, đang cập nhật…</span>' : ""}<span class="sp"></span><span id="tt-dang"></span>`));
+    wrap.appendChild(el("div", "b", `<h4>Khách là ai</h4><p>${esc(t.khach || "—")}</p>`));
+    const bu = el("div", "b", `<h4>Đang ở bước · ${esc(BUOC[t.buoc] || "chưa rõ")}</h4>`);
+    const bar = el("div", "buoc"); for (let i = 1; i <= 5; i++) bar.appendChild(el("span", i < t.buoc ? "on" : i === t.buoc ? "now" : "")); bu.appendChild(bar);
+    bu.appendChild(el("div", "buoc-l", BUOC_NGAN.map(x => `<span>${x}</span>`).join(""))); wrap.appendChild(bu);
+    if (t.daTraoDoi && t.daTraoDoi.length) wrap.appendChild(el("div", "b", `<h4>Đã trao đổi</h4><ul>${t.daTraoDoi.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`));
+    if (t.conThieu && t.conThieu.length) wrap.appendChild(el("div", "b miss", `<h4>Còn thiếu để chốt</h4>${t.conThieu.map(x => `<span class="chip">${esc(x)}</span>`).join("")}`));
+    wrap.appendChild(el("div", "b next", `<h4>Việc tiếp theo${t.gap ? " · khách đang chờ" : ""}</h4><p><b>${esc(t.viecTiepTheo || "—")}</b></p>`));
+  }
+  box.appendChild(wrap);
+
+  const st = el("div", "stack");
+  const bq = el("button", "ibtn", khach.boQua ? "Chăm sóc lại khách này (bỏ dấu không chăm)" : "Không chăm sóc lại khách này");
+  bq.onclick = async () => { const d = await api("/admin/bo-qua", { psid: khach.psid, bat: !khach.boQua }); if (d.loi) return toast(d.loi, true); toast(khach.boQua ? "Đã bỏ dấu" : "Đã gắn: không chăm nữa"); chonKhach(khach.psid, true); };
+  st.appendChild(bq);
+  if (khach.nhan && khach.nhan.boQua) st.appendChild(el("div", "em", `<span class="chip">AI xếp nhóm bỏ qua: ${esc(NHOM_TEN[khach.nhan.nhom] || khach.nhan.nhom)}</span>`));
+  box.appendChild(st);
+}
+async function tomTatLai(imLang) {
+  if (!khach) return;
+  const psid = khach.psid;
+  const dang = $("#tt-dang"); if (dang) dang.textContent = "đang tóm tắt…";
+  $("#btn-tom-tat").disabled = true;
+  const d = await api("/admin/tom-tat", { psid });
+  $("#btn-tom-tat").disabled = false;
+  if (d.loi) { if (!imLang) toast("Tóm tắt lỗi: " + d.loi, true); if (dang) dang.textContent = "lỗi: " + d.loi; return; }
+  if (khach && khach.psid === psid) { khach.tomTat = d.tomTat; khach.tomTatCu = false; veInfo(); }
+}
+$("#btn-tom-tat").addEventListener("click", () => tomTatLai(false));
+async function moLaiBot() { const d = await api("/admin/mo-lai?psid=" + encodeURIComponent(khach.psid), {}, "POST"); if (d.loi) return toast(d.loi, true); toast("Bot sẽ trả lời tiếp khách này"); await taiHoiThoai(); chonKhach(khach.psid, true); }
+async function botIm() { const d = await api("/admin/im", { psid: khach.psid }); if (d.loi) return toast(d.loi, true); toast("Bot im 6 giờ với khách này"); await taiHoiThoai(); chonKhach(khach.psid, true); }
+
+async function gui() {
+  const ta = $("#tra-loi"); const text = ta.value.trim();
+  if (!text || !khach) return;
+  $("#btn-gui").disabled = true; $("#gui-loi").textContent = "";
+  const d = await api("/admin/gui", { psid: khach.psid, text, nguoi: true });
+  $("#btn-gui").disabled = false;
+  if (!d.ok) {
+    const loi = String(d.loi || "");
+    $("#gui-loi").textContent = /24|window|outside|2018278|10\)/.test(loi) ? "Facebook không cho gửi vì khách im quá 24 giờ. Dùng màn Chăm sóc lại để nhắn qua Claude extension." : "Gửi lỗi: " + loi;
+    return;
+  }
+  ta.value = ""; toast("Đã gửi. Bot im 6 giờ với khách này.");
+  await taiHoiThoai(); chonKhach(khach.psid, true);
+}
+$("#btn-gui").addEventListener("click", gui);
+$("#tra-loi").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); gui(); } });
+
+// ================= DẶN THÊM CHO EM =================
+let danData = { luat: [], cho: [] };
+async function taiDan() { const d = await api("/admin/dan"); if (d.loi) return; danData = d; veDan(); }
+function veDan() {
+  const box = $("#dan-body"); box.innerHTML = "";
+  const luat = danData.luat || [], cho = danData.cho || [];
+  $("#p-so-luat").textContent = `${luat.filter(l => l.bat !== false).length} luật đang chạy`;
+  if (!luat.length && !cho.length) box.appendChild(el("div", "em", `<div class="h">Chưa có luật nào bạn dặn thêm</div>Bot đang chạy theo tính cách và sách giáo khoa trong mã. Gõ một câu ở dưới, em nhắc lại cách hiểu rồi bạn gật.`));
+  luat.forEach((l, i) => {
+    const r = el("div", "rule" + (l.bat === false ? " off" : ""));
+    r.appendChild(el("span", "no mono", String(i + 1)));
+    r.appendChild(el("span", "tx", `${esc(l.luat)}<small>bạn dặn: “${esc(l.goc || "")}” · ${gioNgan(l.luc)}</small>`));
+    const ac = el("span", "ac");
+    const b1 = el("button", "", l.bat === false ? "bật" : "tắt"); b1.onclick = async () => { await api("/admin/dan/bat", { id: l.id, bat: l.bat === false }); taiDan(); };
+    const b2 = el("button", "", "xoá"); b2.onclick = async () => { if (!confirm("Xoá luật này? Bot sẽ không theo nữa.")) return; await api("/admin/dan/xoa", { id: l.id }); taiDan(); toast("Đã xoá luật"); };
+    ac.append(b1, b2); r.appendChild(ac); box.appendChild(r);
+  });
+  for (const m of cho) {
+    box.appendChild(el("div", "me", esc(m.goc)));
+    const e = el("div", "em");
+    e.innerHTML = `<div class="h">Em hiểu là</div>${esc(m.hieu || m.luat)}${m.traiVoi ? `<div style="color:var(--warn);margin-top:4px">⚠ Trái với luật hiện có: ${esc(m.traiVoi)}</div>` : ""}<div class="h" style="margin-top:6px">Luật em sẽ ghi</div><div class="rule" style="padding:5px 8px"><span class="tx" contenteditable="true" data-id="${esc(m.id)}">${esc(m.luat)}</span></div>`;
+    const act = el("div", "act");
+    const ok = el("button", "ibtn pri sm", "Áp dụng"); ok.onclick = async () => { const tx = e.querySelector("[contenteditable]").textContent.trim(); const d = await api("/admin/dan/duyet", { id: m.id, luat: tx }); if (d.loi) return toast(d.loi, true); toast("Đã áp dụng, bot theo luật mới từ tin sau"); taiDan(); };
+    const bo = el("button", "ibtn sm", "Bỏ"); bo.onclick = async () => { await api("/admin/dan/bo", { id: m.id }); taiDan(); };
+    act.append(ok, bo); e.appendChild(act); box.appendChild(e);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+async function danEm(taId, btnId) {
+  const ta = $(taId); const text = ta.value.trim(); if (!text) return;
+  const btn = $(btnId); btn.disabled = true; btn.textContent = "Em đang đọc…";
+  const d = await api("/admin/dan", { text });
+  btn.disabled = false; btn.textContent = "Dặn em";
+  if (d.loi) return toast("Em chưa hiểu được: " + d.loi, true);
+  ta.value = ""; await taiDan();
+  if (taId !== "#dan-text") { doiMan("ban-truc"); if (phoneMedia.matches) phonePanel("instructions"); toast("Em đã nhắc lại cách hiểu ở cột phải, anh bấm Áp dụng"); }
+}
+$("#btn-dan").addEventListener("click", () => danEm("#dan-text", "#btn-dan"));
+$("#dan-text").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); danEm("#dan-text", "#btn-dan"); } });
+$("#btn-cs-dan").addEventListener("click", () => danEm("#cs-dan-text", "#btn-cs-dan"));
+
+// ================= CHĂM SÓC LẠI =================
+let cs = null, csPoll;
+async function taiChamSoc() {
+  const d = await api("/admin/cham-soc");
+  if (d.loi) return toast(d.loi, true);
+  cs = d; veChamSoc();
+  clearTimeout(csPoll);
+  if (d.dot && d.dot.dangLap) csPoll = setTimeout(taiChamSoc, 4000);
+}
+function veChamSoc() {
+  const dot = cs.dot;
+  $("#k-nhip").textContent = cs.nhipNgay + " ngày";
+  if (document.activeElement !== $("#cs-lim")) $("#cs-lim").value = (dot && dot.gioiHan) || cs.toiDa;
+  if (document.activeElement !== $("#cs-nhip")) $("#cs-nhip").value = (dot && dot.nhip) || cs.nhipNgay;
+  $("#cs-luat-tom").textContent = `Nhịp ${cs.nhipNgay} ngày · tối đa ${cs.toiDa} khách/đợt · AI tự xếp nhóm bỏ qua: từ chối, đã xong, không phải khách. Khách đã chăm thì ${cs.nhipNgay} ngày sau mới vào đợt tiếp.`;
+  const dt = cs.dotTruoc;
+  $("#k-truoc").textContent = dt ? `${dt.gui} → ${dt.rep}` : "—";
+  $("#k-truoc-l").textContent = dt ? `đợt ${dt.ngay.slice(8)}/${dt.ngay.slice(5, 7)}: gửi → rép` : "chưa có đợt trước";
+  $("#cs-dot-truoc").innerHTML = dt ? `<div class="h">Đợt trước ${esc(dt.ngay)}</div><ul style="margin:0;padding-left:16px"><li>Soạn ${dt.soKhach}, gửi ${dt.gui}, rép ${dt.rep}.</li><li>Bỏ qua: ${Object.entries(dt.boQua || {}).map(([k, v]) => `${NHOM_TEN[k] || k} ${v}`).join(", ") || "0"}.</li></ul>` : "";
+
+  const tbl = $("#tbl"); tbl.querySelectorAll(".tr:not(.th)").forEach(x => x.remove());
+  const empty = $("#tbl-empty");
+  const trangThai = $("#cs-trang-thai");
+  $("#n-cham").textContent = dot && !dot.dangLap ? (dot.khach.filter(k => k.chon && !k.daGui).length || "") : "";
+  if (!dot) { empty.classList.remove("hidden"); $("#k-can").textContent = "—"; $("#k-boqua").textContent = "—"; $("#cs-tieu-de").textContent = "Gửi đợt"; trangThai.textContent = "chưa có đợt"; trangThai.className = "pill warn"; $("#btn-duyet").disabled = true; $("#cs-lenh-box").classList.add("hidden"); capNhatChon(); return; }
+  empty.classList.add("hidden");
+  $("#cs-tieu-de").textContent = `Gửi đợt ${dot.ngay.slice(8)}/${dot.ngay.slice(5, 7)}`;
+  $("#k-can").textContent = dot.khach.filter(k => !k.daGui).length;
+  $("#k-boqua").textContent = dot.boQuaTong || 0;
+  $("#skip").innerHTML = "Bỏ qua: " + (Object.keys(dot.boQua || {}).length ? Object.entries(dot.boQua).map(([k, v]) => `<span class="pill quiet">${esc(NHOM_TEN[k] || k)} ${v}</span>`).join("") : '<span class="pill quiet">0</span>');
+  const daGui = dot.khach.filter(k => k.daGui).length;
+  if (dot.dangLap) { trangThai.textContent = `đang lập ${dot.tienDo.xong}/${dot.tienDo.tong}`; trangThai.className = "pill warn"; }
+  else if (daGui && daGui === dot.khach.filter(k => k.chon || k.daGui).length) { trangThai.textContent = "đã gửi hết"; trangThai.className = "pill on"; }
+  else if (dot.duyetLuc) { trangThai.textContent = `đã duyệt · gửi ${daGui}`; trangThai.className = "pill on"; }
+  else { trangThai.textContent = "chờ duyệt"; trangThai.className = "pill warn"; }
+  $("#cs-prog").classList.toggle("hidden", !dot.dangLap); $("#cs-prog-t").classList.toggle("hidden", !dot.dangLap);
+  if (dot.dangLap) { $("#cs-prog i").style.width = (dot.tienDo.tong ? 100 * dot.tienDo.xong / dot.tienDo.tong : 5) + "%"; $("#cs-prog-t").textContent = `AI đang đọc ${dot.tienDo.xong}/${dot.tienDo.tong} khách (ứng viên ${dot.ungVien})`; }
+  $("#btn-lap").disabled = Boolean(dot.dangLap);
+  $("#btn-lap").textContent = dot.dangLap ? "Đang lập…" : "Lập lại danh sách";
+
+  const ds = [...dot.khach].sort((a, b) => (a.daGui ? 1 : 0) - (b.daGui ? 1 : 0) || (b.t || 0) - (a.t || 0));
+  for (const k of ds) {
+    const r = el("div", "tr" + (k.daGui ? " sent" : k.chon ? "" : " off"));
+    const cb = el("input"); cb.type = "checkbox"; cb.checked = Boolean(k.chon) && !k.daGui; cb.disabled = Boolean(k.daGui) || !k.cau;
+    cb.onchange = async () => { k.chon = cb.checked; r.classList.toggle("off", !cb.checked); capNhatChon(); await api("/admin/cham-soc/sua", { ngay: dot.ngay, psid: k.psid, chon: cb.checked }); };
+    r.appendChild(cb);
+    const nm = el("div", "nm"); nm.appendChild(avatar(k.ten, k.psid)); nm.appendChild(el("span", "", `${esc(k.ten || k.psid)}<small>${k.daGui ? "đã gửi " + gioNgan(k.daGui) + (k.rep ? " · đã rép" : "") : k.model ? esc(String(k.model).split("/").pop()) : ""}</small>`)); r.appendChild(nm);
+    r.appendChild(el("div", "ago mono", (k.soNgayIm || Math.round((Date.now() - k.t) / 86400000)) + " ngày"));
+    r.appendChild(el("span", "step s" + k.buoc, esc(BUOC[k.buoc] || "chưa rõ")));
+    const cau = el("div", "cau" + (k.loi ? " loi" : "")); cau.textContent = k.cau || (k.loi ? "AI lỗi: " + k.loi : "(trống)");
+    if (!k.daGui && !k.loi) { cau.contentEditable = "true"; cau.onblur = async () => { const v = cau.textContent.trim(); if (v !== k.cau) { k.cau = v; await api("/admin/cham-soc/sua", { ngay: dot.ngay, psid: k.psid, cau: v }); toast("Đã lưu câu"); } }; }
+    r.appendChild(cau);
+    const ac = el("div", "ac");
+    const xem = el("button", "ibtn sm", "Chat"); xem.title = "Mở hội thoại ở bàn trực"; xem.onclick = () => { doiMan("ban-truc"); chonKhach(k.psid); }; ac.appendChild(xem);
+    if (!k.daGui && k.cau) {
+      const dg = el("button", "ibtn sm", "Đã gửi"); dg.title = "Extension đã gửi câu này, đánh dấu để 3 ngày sau không gửi trùng"; dg.onclick = async () => { const d = await api("/admin/cham-soc/da-gui", { ngay: dot.ngay, psid: k.psid }); if (d.loi) return toast(d.loi, true); toast("Đã ghi"); taiChamSoc(); }; ac.appendChild(dg);
+      const ap = el("button", "ibtn sm", "API"); ap.title = "Gửi thẳng qua Graph API bằng thẻ Human Agent (cần app được duyệt)"; ap.onclick = async () => { ap.disabled = true; const d = await api("/admin/cham-soc/gui-api", { ngay: dot.ngay, psid: k.psid }); ap.disabled = false; if (!d.ok) return toast(d.chuaQuyen ? "Facebook từ chối: app chưa có quyền Human Agent. Dùng đường extension." : "Gửi lỗi: " + d.loi, true); toast("Đã gửi qua API"); taiChamSoc(); }; ac.appendChild(ap);
+    }
+    r.appendChild(ac); tbl.appendChild(r);
+  }
+  capNhatChon();
+  $("#cs-lenh-box").classList.toggle("hidden", !cs.lenh);
+  if (cs.lenh) $("#cs-lenh").textContent = cs.lenh;
+}
+function capNhatChon() {
+  const dot = cs && cs.dot; const chon = dot ? dot.khach.filter(k => k.chon && k.cau && !k.daGui).length : 0;
+  $("#cs-chon").textContent = `${chon} / ${dot ? dot.khach.filter(k => !k.daGui).length : 0} được chọn`;
+  $("#btn-duyet").disabled = !chon || Boolean(dot && dot.dangLap);
+}
+$("#btn-lap").addEventListener("click", async () => {
+  if (cs && cs.dot && !cs.dot.dangLap && cs.dot.khach.some(k => !k.daGui) && !confirm("Lập lại sẽ soạn lại câu cho những người chưa gửi. Người đã gửi giữ nguyên. Tiếp?")) return;
+  const d = await api("/admin/cham-soc/lap", { toi_da: Number($("#cs-lim").value) || undefined, nhip_ngay: Number($("#cs-nhip").value) || undefined });
+  if (d.loi) return toast(d.loi, true);
+  toast("Đang lập danh sách, AI đọc từng khách…"); cs.lenh = ""; setTimeout(taiChamSoc, 1500);
+});
+$("#btn-duyet").addEventListener("click", async () => {
+  const d = await api("/admin/cham-soc/duyet", { ngay: cs.dot.ngay });
+  if (d.loi) return toast(d.loi, true);
+  cs.lenh = d.lenh; await taiChamSoc(); toast(`Đã duyệt ${d.soKhach} khách. Chép lệnh rồi dán vào Claude extension.`);
+});
+$("#btn-chep").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#cs-lenh").textContent); toast("Đã chép lệnh. Dán vào cột Claude trong Chrome."); } catch (e) { const r = document.createRange(); r.selectNodeContents($("#cs-lenh")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Bôi đen sẵn rồi, anh bấm Ctrl+C"); } });
+$("#btn-da-gui-het").addEventListener("click", async () => {
+  const ds = cs.dot.khach.filter(k => k.duyet && !k.daGui).map(k => k.psid);
+  if (!ds.length) return toast("Không còn ai chưa đánh dấu");
+  if (!confirm(`Đánh dấu đã gửi cho ${ds.length} khách đã duyệt?`)) return;
+  const d = await api("/admin/cham-soc/da-gui", { ngay: cs.dot.ngay, psid: ds }); if (d.loi) return toast(d.loi, true);
+  cs.lenh = ""; toast(`Đã ghi ${d.so} khách`); taiChamSoc();
+});
+
+// ================= KHỞI ĐỘNG =================
+(async function () {
+  await Promise.all([taiTrangThai(), taiHoiThoai(), taiDan()]);
+  let man = "ban-truc"; try { man = localStorage.getItem("man") || man; } catch (e) {}
+  if (man === "cham-soc") doiMan("cham-soc"); else api("/admin/cham-soc").then(d => { if (d.dot && !d.dot.dangLap) $("#n-cham").textContent = d.dot.khach.filter(k => k.chon && !k.daGui).length || ""; });
+  setInterval(async () => { await taiTrangThai(); await taiHoiThoai(); if (psidChon && !$("#man-ban-truc").classList.contains("hidden")) chonKhach(psidChon, true); }, 30000);
+})();
+})();
+</script>
+</body>
+</html>

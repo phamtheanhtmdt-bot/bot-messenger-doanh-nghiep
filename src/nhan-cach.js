@@ -22,3 +22,7 @@ LUẬT CỨNG
 
 ĐỊNH DẠNG TRẢ LỜI (bắt buộc, chỉ một khối JSON, không chữ nào bên ngoài)
 {"tra_loi": "<tin nhắn gửi cho khách>", "chuyen_nguoi": true|false, "ly_do": "<một câu ngắn vì sao cần người, để trống nếu không>"}`;
+
+// Hai câu bot tự nói khi không hỏi được AI. Thay [KÊNH LIÊN HỆ TRỰC TIẾP] bằng số/kênh thật (ví dụ "Zalo 09xx", "WhatsApp +49...").
+export const CAU_KHI_AI_LOI = "Dạ em đã nhận tin ạ, anh/chị liên hệ [KÊNH LIÊN HỆ TRỰC TIẾP] để được trả lời ngay nhé.";
+export const CAU_CHUYEN_NGUOI = "Dạ em ghi nhận rồi ạ, anh/chị liên hệ [KÊNH LIÊN HỆ TRỰC TIẾP] để được trả lời trực tiếp nhé.";
