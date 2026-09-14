@@ -16,7 +16,9 @@ workers_dev = true
 CHE_DO = "worker"                 # worker tự gọi AI ở AI_BASE_URL (để nguyên)
 FB_PAGE_ID = "<id-trang-facebook>"       # Trang → Giới thiệu → ID Trang
 FB_APP_ID = "<id-app-developers>"        # developers.facebook.com → app → App ID
-AI_BASE_URL = "https://api.openai.com/v1"    # OpenAI, hoặc dịch vụ tương thích OpenAI (ví dụ https://kymaapi.com/v1)
+# Khoá AI: lớp khuyên đăng ký Kyma qua link https://kymaapi.com?aff=kz4ttRu → đổi 2 dòng dưới thành
+#   AI_BASE_URL = "https://kymaapi.com/v1"  và  MODEL = "gpt-5.6-sol,claude-haiku-4-5,gpt-5.6-luna"
+AI_BASE_URL = "https://api.openai.com/v1"    # OpenAI, hoặc dịch vụ tương thích OpenAI (Kyma: https://kymaapi.com/v1)
 MODEL = "gpt-4.1"                        # một hoặc nhiều tên cách nhau dấu phẩy, con đầu lỗi thử con sau (tên phải có ở nhà cung cấp bạn dùng)
 GIO_NGUOI_TRUC = "6"              # chủ doanh nghiệp tự trả lời xong, bot im bấy nhiêu giờ với khách đó (tin do Pancake/Botcake gửi KHÔNG làm bot im)
 PHUT_TUOI = "10"                  # khi quét hộp thư, chỉ trả lời tin khách mới trong bấy nhiêu phút; cũ hơn chỉ ghi lịch sử

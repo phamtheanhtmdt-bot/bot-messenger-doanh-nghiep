@@ -35,8 +35,10 @@ Khách nhắn Fanpage ──► Facebook gõ cửa Worker (webhook, tức thì)
 - [ ] Ứng dụng **Claude Code** đã cài và đăng nhập (claude.ai/code → tải bản máy tính).
 - [ ] Máy có **Node.js 20+** (nodejs.org, bản LTS) và **Git** (git-scm.com). Kiểm tra: mở Claude Code, nói
       **"kiểm tra máy tôi đã có node và git chưa"** → Claude báo số phiên bản.
-- [ ] Một **khoá API AI**: OpenAI (platform.openai.com → API keys) hoặc dịch vụ tương thích OpenAI mà giảng viên chỉ định.
-      Nạp ít (10–20 USD), **không bật nạp tiền tự động**.
+- [ ] Một **khoá API AI**. Lớp khuyên dùng **Kyma API** — đăng ký qua link của lớp: https://kymaapi.com?aff=kz4ttRu
+      Một khoá gọi được nhiều hãng (GPT, Claude, Gemini...), tương thích OpenAI, cùng nhà cung cấp giảng viên đang dùng cho bot thật.
+      Đăng ký xong → **API Keys** → tạo khoá → chép. Nạp ít (10–20 USD), **không bật nạp tiền tự động**.
+      Đã có khoá OpenAI (platform.openai.com → API keys) thì dùng cũng được, Claude sẽ chỉnh `AI_BASE_URL` cho khớp.
 - [ ] Tải mã: vào https://github.com/phamtheanhtmdt-bot/bot-messenger-doanh-nghiep → nút **Code** → **Download ZIP** → giải nén
       vào một thư mục dễ nhớ, ví dụ `D:\bot-messenger`. Rồi mở Claude Code → **Open folder** → chọn thư mục đó.
       Đạt khi trong thư mục có `CLAUDE.md`, `src`, `kien-thuc`, `docs`.
@@ -61,7 +63,8 @@ Khách nhắn Fanpage ──► Facebook gõ cửa Worker (webhook, tức thì)
       Claude chạy `npm install`, rồi `npx wrangler login` → trình duyệt mở → bấm **Allow**.
       Đạt khi Claude báo `whoami` in ra email và Account ID của bạn.
 - [ ] 2.2 Claude tạo kho nhớ (`kv namespace create KHO`) và điền 5 chỗ `<...>` trong `wrangler.toml`. Claude sẽ hỏi bạn
-      **tên worker** (chữ thường không dấu, ví dụ `bot-an-spa`), **ID Trang** (1.6), **App ID** (1.1).
+      **tên worker** (chữ thường không dấu, ví dụ `bot-an-spa`), **ID Trang** (1.6), **App ID** (1.1),
+      và **khoá AI của bạn mua ở đâu** (Kyma hay OpenAI) để đặt `AI_BASE_URL` + `MODEL` cho đúng.
 - [ ] 2.3 Claude chạy `npm test` (9 bài tự kiểm, phải pass hết) rồi `npx wrangler deploy`. Đạt khi Claude đưa bạn địa chỉ
       `https://<tên>.<tài-khoản>.workers.dev` và mở lên thấy chữ "Bot Messenger đang chạy".
 - [ ] 2.4 Đặt 5 secret. Claude sẽ hỏi lần lượt, bạn dán vào chat: **Page token** (1.3), **App Secret** (1.4), **khoá AI** (phần 0).
@@ -144,5 +147,6 @@ Trang có hai màn, chọn ở thanh trên. Làm lần lượt để quen tay:
 - [ ] Thanh trên báo webhook "chưa có" nhưng quét vẫn chạy: bot hoạt động nhưng chậm ~1 phút; kiểm 3.4 → 3.3 → 3.1 → token (1.3).
 - [ ] Bot gửi lỗi "app khác đang kiểm soát": xem 3.4, chỉ một app được bật "Kiểm soát cuộc trò chuyện".
 - [ ] Bot trả lời câu `CAU_KHI_AI_LOI` cho mọi khách: khoá AI hết tiền hoặc sai. Nói với Claude **"xem /admin có lỗi gì"** → đọc `loiGanDay`.
+      Hết tiền thì nạp thêm ở nhà cung cấp (Kyma: https://kymaapi.com?aff=kz4ttRu).
 - [ ] Gửi tay báo "khách im quá 24 giờ": luật Facebook, dùng màn Chăm sóc lại.
 - [ ] Quên `ADMIN_KEY`: nói với Claude **"đặt lại ADMIN_KEY"** → Claude sinh khoá mới và đặt secret; khoá cũ hết tác dụng.

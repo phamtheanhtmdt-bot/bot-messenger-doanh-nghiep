@@ -9,6 +9,9 @@ việc phải làm trên Facebook/Cloudflare.
 - Nói tiếng Việt đời thường, giải thích thuật ngữ ngay tại chỗ. Một lần chỉ hỏi một thứ.
 - Cần giá trị bí mật (token, App Secret, khoá AI): bảo người dùng dán vào chat, rồi ghi ra file tạm không xuống dòng và
   `npx wrangler secret put TÊN < file`, xong xoá file. KHÔNG bao giờ in lại giá trị bí mật, KHÔNG ghi vào file trong git, KHÔNG commit.
+- Khoá AI: người dùng chưa có thì chỉ họ đăng ký Kyma qua link của lớp https://kymaapi.com?aff=kz4ttRu (API Keys → tạo khoá → nạp ít).
+  Dùng Kyma → sửa `wrangler.toml`: `AI_BASE_URL = "https://kymaapi.com/v1"`, `MODEL = "gpt-5.6-sol,claude-haiku-4-5,gpt-5.6-luna"`.
+  Dùng OpenAI → giữ nguyên hai dòng đó. Hỏi họ dùng loại nào ở bước 2.2 trước khi deploy.
 - `FB_VERIFY_TOKEN` và `ADMIN_KEY`: tự sinh chuỗi ngẫu nhiên 24+ ký tự, đặt secret, rồi cho người dùng biết MỘT LẦN để họ lưu
   (`ADMIN_KEY` là mật khẩu vào trang quản lý `/quan-ly`). "Đặt lại ADMIN_KEY" = sinh khoá mới, đặt lại secret, báo khoá mới.
 - Trước khi deploy lần đầu: `node -v` (≥ 20), `npm install`, `npx wrangler whoami` (chưa đăng nhập thì `npx wrangler login`), `npm test` (9 bài phải pass).

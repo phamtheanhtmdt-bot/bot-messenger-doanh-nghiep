@@ -77,6 +77,14 @@ POST /admin/cham-soc/gui-api {"psid"}            gửi thẳng bằng thẻ HUMA
 `FB_PAGE_TOKEN`, `FB_APP_SECRET`, `FB_VERIFY_TOKEN`, `ADMIN_KEY`, `OPENAI_API_KEY`. Claude Code đặt giúp bằng
 `npx wrangler secret put`, bạn chỉ dán giá trị vào chat khi được hỏi. `ADMIN_KEY` là mật khẩu vào trang quản lý.
 
+## Khoá AI mua ở đâu
+
+Bot cần một khoá API AI (`OPENAI_API_KEY`). Lớp khuyên dùng **Kyma API**, đăng ký qua link của lớp:
+**https://kymaapi.com?aff=kz4ttRu** — một khoá gọi được nhiều hãng (GPT, Claude, Gemini...), tương thích OpenAI,
+cùng nhà cung cấp giảng viên đang dùng cho bot thật. Dùng Kyma thì `AI_BASE_URL = "https://kymaapi.com/v1"`
+và `MODEL = "gpt-5.6-sol,claude-haiku-4-5,gpt-5.6-luna"` (Claude Code chỉnh giúp ở bước 2.2). Đã có khoá OpenAI thì giữ cấu hình mặc định.
+Nạp ít (10–20 USD), không bật nạp tiền tự động.
+
 ## Điều bot làm để không loạn inbox
 
 - Bạn tự trả lời khách nào (Hộp thư Trang hoặc ở /quan-ly) → bot im với khách đó `GIO_NGUOI_TRUC` giờ (mặc định 6).
@@ -89,7 +97,7 @@ POST /admin/cham-soc/gui-api {"psid"}            gửi thẳng bằng thẻ HUMA
 
 - Facebook chỉ cho bot trả lời khách đã nhắn trong 24 giờ gần nhất. Khách im lâu hơn: màn Chăm sóc lại.
 - Chỉ MỘT app được bật "Kiểm soát cuộc trò chuyện" trên Page.
-- Tốn tiền AI theo tin (vài trăm đồng một tin). Không bật nạp tiền tự động ở nhà cung cấp AI.
+- Tốn tiền AI theo tin (vài trăm đồng một tin). Không bật nạp tiền tự động ở nhà cung cấp AI. Hết tiền: nạp thêm ở Kyma (https://kymaapi.com?aff=kz4ttRu).
 - Lịch sử chat giữ 90 ngày trong KV, tối đa 20 lượt gần nhất mỗi khách được đưa cho AI.
 
 ## Chạy thử tại máy / kiểm tra
